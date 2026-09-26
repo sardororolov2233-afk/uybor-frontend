@@ -14,17 +14,24 @@ export const AddListing: React.FC = () => {
     bathrooms: '1',
   });
   
-  const user = WebApp.initDataUnsafe.user;
+  const user = WebApp?.initDataUnsafe?.user;
   console.log('Current user:', user);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      // await api.post('/listings', formData);
-      WebApp.showAlert('Listing added successfully!');
+      if (WebApp && WebApp.showAlert) {
+        WebApp.showAlert('Listing added successfully!');
+      } else {
+        alert('Listing added successfully!');
+      }
       navigate('/my-listings');
     } catch (error) {
-      WebApp.showAlert('Error adding listing');
+      if (WebApp && WebApp.showAlert) {
+        WebApp.showAlert('Error adding listing');
+      } else {
+        alert('Error adding listing');
+      }
     }
   };
 

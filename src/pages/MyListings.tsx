@@ -7,7 +7,7 @@ export const MyListings: React.FC = () => {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   
-  const user = WebApp.initDataUnsafe.user;
+  const user = WebApp?.initDataUnsafe?.user;
 
   useEffect(() => {
     const fetchMyListings = async () => {
@@ -27,7 +27,7 @@ export const MyListings: React.FC = () => {
             images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=500&q=80'],
             bedrooms: 2,
             bathrooms: 1,
-            userId: user?.id.toString() || '123',
+            userId: user?.id?.toString() || '123',
             createdAt: new Date().toISOString()
           }
         ]);
