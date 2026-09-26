@@ -10,16 +10,20 @@ export const Details: React.FC = () => {
   const [listing, setListing] = useState<Listing | null>(null);
 
   useEffect(() => {
-    // Show back button in Telegram Mini App
-    WebApp.BackButton.show();
-    WebApp.BackButton.onClick(() => {
-      navigate(-1);
-    });
-
-    return () => {
-      WebApp.BackButton.hide();
-      WebApp.BackButton.offClick(() => navigate(-1));
-    };
+    try {
+      if (WebApp && WebApp.BackButton) {
+        WebApp.BackButton.show();
+        const handleBack = () => navigate(-1);
+        WebApp.BackButton.onClick(handleBack);
+        
+        return () => {
+          WebApp.BackButton.hide();
+          WebApp.BackButton.offClick(handleBack);
+        };
+      }
+    } catch (e) {
+      console.error("BackButton error:", e);
+    }
   }, [navigate]);
 
   useEffect(() => {

@@ -9,8 +9,14 @@ export const Layout: React.FC = () => {
 
   // Expand Telegram Mini App to full height
   React.useEffect(() => {
-    WebApp.ready();
-    WebApp.expand();
+    try {
+      if (WebApp && WebApp.ready) {
+        WebApp.ready();
+        WebApp.expand();
+      }
+    } catch (e) {
+      console.error("Telegram WebApp init error:", e);
+    }
   }, []);
 
   return (

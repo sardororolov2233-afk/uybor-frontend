@@ -7,8 +7,12 @@ const api = axios.create({
 
 // Interceptor to add Telegram InitData for authentication (if needed by backend)
 api.interceptors.request.use((config) => {
-  if (WebApp.initData) {
-    config.headers.Authorization = `tma ${WebApp.initData}`;
+  try {
+    if (WebApp && WebApp.initData) {
+      config.headers.Authorization = `tma ${WebApp.initData}`;
+    }
+  } catch (e) {
+    console.error("Auth interceptor error:", e);
   }
   return config;
 });
