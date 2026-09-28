@@ -43,6 +43,13 @@ export const translations = {
     'filter.family': 'Oila',
     'filter.studentGirls': 'Student qizlar',
     'filter.studentBoys': 'Student bolalar',
+    
+    'filter.propAll': 'Barcha turlar',
+    'filter.propApartment': 'Kvartira',
+    'filter.propHouse': 'Hovli/dacha',
+    'filter.propCommercial': 'Tijorat binolari',
+    'filter.propLand': 'Yer',
+
     // Listing Card
     'card.beds': 'xona',
     'card.baths': 'hammom',
@@ -121,6 +128,12 @@ export const translations = {
     'filter.family': 'Семья',
     'filter.studentGirls': 'Студентки',
     'filter.studentBoys': 'Студенты',
+    
+    'filter.propAll': 'Все типы',
+    'filter.propApartment': 'Квартира',
+    'filter.propHouse': 'Дом/дача',
+    'filter.propCommercial': 'Коммерческая',
+    'filter.propLand': 'Участок',
 
     // Listing Card
     'card.beds': 'комн.',

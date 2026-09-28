@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Search, SlidersHorizontal, Building2, User, Home as HomeIcon } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
+import { SelectSheet } from './SelectSheet';
 
 interface FilterFormProps {
   onSearch: (query: string) => void;
@@ -10,7 +11,27 @@ interface FilterFormProps {
 export const FilterForm: React.FC<FilterFormProps> = ({ onSearch, onOpenFilter }) => {
   const [query, setQuery] = useState('');
   const [activeTab, setActiveTab] = useState<'sale' | 'rent' | 'daily'>('sale');
+  
+  // Quick Filters state
+  const [rentFilter, setRentFilter] = useState<string | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
+  const [isMortgage, setIsMortgage] = useState(false);
+  const [propertyType, setPropertyType] = useState<string>('all');
+  const [isTypeSheetOpen, setIsTypeSheetOpen] = useState(false);
+
   const { t } = useTranslation();
+
+  const propertyTypes = [
+    { value: 'all', label: t('filter.propAll') || 'Barcha turlar' },
+    { value: 'apartment', label: t('filter.propApartment') || 'Kvartira' },
+    { value: 'house', label: t('filter.propHouse') || 'Hovli/dacha' },
+    { value: 'commercial', label: t('filter.propCommercial') || 'Tijorat binolari' },
+    { value: 'land', label: t('filter.propLand') || 'Yer' }
+  ];
+
+  const toggleRentFilter = (val: string) => {
+    setRentFilter(prev => prev === val ? null : val);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,34 +89,61 @@ export const FilterForm: React.FC<FilterFormProps> = ({ onSearch, onOpenFilter }
       <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-1">
         {activeTab === 'rent' ? (
           <>
-            <button className="flex items-center gap-1.5 whitespace-nowrap bg-gray-100 px-3 py-1.5 rounded-full text-sm font-medium text-gray-700">
+            <button 
+              onClick={() => toggleRentFilter('family')}
+              className={`flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${rentFilter === 'family' ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-700 active:bg-gray-200'}`}
+            >
               {t('filter.family')}
             </button>
-            <button className="flex items-center gap-1.5 whitespace-nowrap bg-gray-100 px-3 py-1.5 rounded-full text-sm font-medium text-gray-700">
+            <button 
+              onClick={() => toggleRentFilter('girls')}
+              className={`flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${rentFilter === 'girls' ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-700 active:bg-gray-200'}`}
+            >
               {t('filter.studentGirls')}
             </button>
-            <button className="flex items-center gap-1.5 whitespace-nowrap bg-gray-100 px-3 py-1.5 rounded-full text-sm font-medium text-gray-700">
+            <button 
+              onClick={() => toggleRentFilter('boys')}
+              className={`flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${rentFilter === 'boys' ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-700 active:bg-gray-200'}`}
+            >
               {t('filter.studentBoys')}
             </button>
           </>
         ) : (
           <>
-            <button className="flex items-center gap-1.5 whitespace-nowrap bg-gray-100 px-3 py-1.5 rounded-full text-sm font-medium text-gray-700">
+            <button 
+              onClick={() => setIsTypeSheetOpen(true)}
+              className={`flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${propertyType !== 'all' ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-700 active:bg-gray-200'}`}
+            >
               <Building2 size={14} />
-              {t('filter.type')}
+              {propertyType !== 'all' ? propertyTypes.find(p => p.value === propertyType)?.label : t('filter.type')}
               <span className="ml-1 text-[10px]">▼</span>
             </button>
-            <button className="flex items-center gap-1.5 whitespace-nowrap bg-gray-100 px-3 py-1.5 rounded-full text-sm font-medium text-gray-700">
+            <button 
+              onClick={() => setIsOwner(!isOwner)}
+              className={`flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${isOwner ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-700 active:bg-gray-200'}`}
+            >
               <User size={14} />
               {t('filter.owner')}
             </button>
-            <button className="flex items-center gap-1.5 whitespace-nowrap bg-gray-100 px-3 py-1.5 rounded-full text-sm font-medium text-gray-700">
+            <button 
+              onClick={() => setIsMortgage(!isMortgage)}
+              className={`flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${isMortgage ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-700 active:bg-gray-200'}`}
+            >
               <HomeIcon size={14} />
               {t('filter.mortgage')}
             </button>
           </>
         )}
       </div>
+
+      <SelectSheet
+        isOpen={isTypeSheetOpen}
+        onClose={() => setIsTypeSheetOpen(false)}
+        title={t('filter.type')}
+        options={propertyTypes}
+        selectedValue={propertyType}
+        onSelect={setPropertyType}
+      />
     </div>
   );
 };
