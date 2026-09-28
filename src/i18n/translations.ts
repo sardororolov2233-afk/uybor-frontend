@@ -7,7 +7,10 @@ export const translations = {
     
     // Home & Search
     'search.placeholder': "Joylashuv yoki sarlavha bo'yicha qidirish...",
+    'home.newListings': "Yangi e'lonlar",
+    'home.vipListings': "VIP e'lonlar",
     'home.featured': "Tavsiya etilgan e'lonlar",
+    'home.seeAll': "Hammasi",
     'home.noListings': "Hech qanday e'lon topilmadi.",
     'home.loading': "Yuklanmoqda...",
     
@@ -53,7 +56,10 @@ export const translations = {
     
     // Home & Search
     'search.placeholder': 'Поиск по локации или названию...',
-    'home.featured': 'Рекомендуемые объявления',
+    'home.newListings': 'Новые объявления',
+    'home.vipListings': 'VIP объявления',
+    'home.featured': 'Рекомендуемые',
+    'home.seeAll': 'Все',
     'home.noListings': 'Объявления не найдены.',
     'home.loading': 'Загрузка...',
     
