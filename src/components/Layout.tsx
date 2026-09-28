@@ -7,7 +7,7 @@ import { Header } from './Header';
 
 export const Layout: React.FC = () => {
   const { pathname } = useLocation();
-  const hideBottomNav = pathname.includes('/listing/') || pathname.includes('/add');
+  const hideBottomNav = pathname.includes('/listing/');
   const showHeader = pathname === '/';
   const { t } = useTranslation();
 
