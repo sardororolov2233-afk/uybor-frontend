@@ -1,11 +1,15 @@
 import React from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { Home, PlusCircle, User } from 'lucide-react';
+import { Home, Wallet, Clock, User } from 'lucide-react';
 import WebApp from '@twa-dev/sdk';
+import { useTranslation } from '../i18n/LanguageContext';
+import { Header } from './Header';
 
 export const Layout: React.FC = () => {
   const { pathname } = useLocation();
-  const hideBottomNav = pathname.includes('/listing/');
+  const hideBottomNav = pathname.includes('/listing/') || pathname.includes('/add');
+  const showHeader = pathname === '/';
+  const { t } = useTranslation();
 
   // Expand Telegram Mini App to full height
   React.useEffect(() => {
@@ -20,45 +24,57 @@ export const Layout: React.FC = () => {
   }, []);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50 pb-safe">
-      <main className="flex-1 overflow-y-auto pb-20">
+    <div className="flex flex-col min-h-screen bg-[#f5f8ff] pb-safe">
+      {showHeader && <Header />}
+      
+      <main className="flex-1 overflow-y-auto pb-24">
         <Outlet />
       </main>
 
       {!hideBottomNav && (
-        <nav className="fixed bottom-0 w-full bg-white border-t border-gray-100 pb-safe-bottom">
-          <div className="flex justify-around items-center h-16">
+        <div className="fixed bottom-4 left-4 right-4 z-50">
+          <nav className="bg-white rounded-[32px] shadow-lg shadow-blue-900/5 px-2 py-2 flex justify-between items-center h-[72px]">
             <NavLink 
               to="/" 
               className={({ isActive }) => 
-                `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`
+                `flex flex-col items-center justify-center w-[72px] h-[56px] rounded-[24px] transition-all ${isActive ? 'bg-[#0066b2] text-white' : 'text-gray-500 hover:text-gray-700'}`
               }
             >
-              <Home size={24} />
-              <span className="text-[10px] font-medium">Explore</span>
+              <Home size={22} className="mb-0.5" />
+              <span className="text-[10px] font-medium">{t('nav.explore') || 'Asosiy'}</span>
             </NavLink>
             
             <NavLink 
-              to="/add" 
+              to="/wallet" 
               className={({ isActive }) => 
-                `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`
+                `flex flex-col items-center justify-center w-[72px] h-[56px] rounded-[24px] transition-all ${isActive ? 'bg-[#0066b2] text-white' : 'text-gray-500 hover:text-gray-700'}`
               }
             >
-              <PlusCircle size={24} />
-              <span className="text-[10px] font-medium">Add</span>
+              <Wallet size={22} className="mb-0.5" />
+              <span className="text-[10px] font-medium">To'ldirish</span>
+            </NavLink>
+
+            <NavLink 
+              to="/orders" 
+              className={({ isActive }) => 
+                `flex flex-col items-center justify-center w-[72px] h-[56px] rounded-[24px] transition-all ${isActive ? 'bg-[#0066b2] text-white' : 'text-gray-500 hover:text-gray-700'}`
+              }
+            >
+              <Clock size={22} className="mb-0.5" />
+              <span className="text-[10px] font-medium">Buyurtmalar</span>
             </NavLink>
             
             <NavLink 
               to="/my-listings" 
               className={({ isActive }) => 
-                `flex flex-col items-center justify-center w-full h-full space-y-1 transition-colors ${isActive ? 'text-blue-600' : 'text-gray-400 hover:text-gray-600'}`
+                `flex flex-col items-center justify-center w-[72px] h-[56px] rounded-[24px] transition-all ${isActive ? 'bg-[#0066b2] text-white' : 'text-gray-500 hover:text-gray-700'}`
               }
             >
-              <User size={24} />
-              <span className="text-[10px] font-medium">Profile</span>
+              <User size={22} className="mb-0.5" />
+              <span className="text-[10px] font-medium">{t('nav.profile') || 'Profil'}</span>
             </NavLink>
           </div>
-        </nav>
+        </div>
       )}
     </div>
   );

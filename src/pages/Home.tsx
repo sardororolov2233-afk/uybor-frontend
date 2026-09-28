@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { FilterForm } from '../components/FilterForm';
 import { ListingCard } from '../components/ListingCard';
 import type { Listing } from '../types';
+import { useTranslation } from '../i18n/LanguageContext';
 
 export const Home: React.FC = () => {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
 
   const fetchListings = async (searchQuery?: string) => {
     setLoading(true);
@@ -63,7 +65,7 @@ export const Home: React.FC = () => {
       <FilterForm onSearch={handleSearch} />
       
       <div className="p-4">
-        <h1 className="text-xl font-bold mb-4">Featured Listings</h1>
+        <h1 className="text-xl font-bold mb-4">{t('home.featured')}</h1>
         
         {loading ? (
           <div className="flex justify-center p-8">
@@ -77,7 +79,7 @@ export const Home: React.FC = () => {
           </div>
         ) : (
           <div className="text-center text-gray-500 mt-10">
-            No listings found.
+            {t('home.noListings')}
           </div>
         )}
       </div>

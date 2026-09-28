@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Search, SlidersHorizontal } from 'lucide-react';
+import { useTranslation } from '../i18n/LanguageContext';
 
 interface FilterFormProps {
   onSearch: (query: string) => void;
@@ -7,6 +8,7 @@ interface FilterFormProps {
 
 export const FilterForm: React.FC<FilterFormProps> = ({ onSearch }) => {
   const [query, setQuery] = useState('');
+  const { t } = useTranslation();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -14,7 +16,7 @@ export const FilterForm: React.FC<FilterFormProps> = ({ onSearch }) => {
   };
 
   return (
-    <div className="bg-white sticky top-0 z-10 px-4 py-3 border-b border-gray-100 shadow-sm">
+    <div className="bg-white sticky top-0 z-10 px-4 py-3 border-b border-gray-100 shadow-sm flex flex-col gap-3">
       <form onSubmit={handleSubmit} className="flex gap-2">
         <div className="relative flex-1">
           <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -23,7 +25,7 @@ export const FilterForm: React.FC<FilterFormProps> = ({ onSearch }) => {
           <input
             type="text"
             className="block w-full pl-10 pr-3 py-2.5 bg-gray-50 border-transparent rounded-xl text-sm placeholder-gray-400 focus:border-blue-500 focus:bg-white focus:ring-0 transition-colors"
-            placeholder="Search by location or title..."
+            placeholder={t('search.placeholder')}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />

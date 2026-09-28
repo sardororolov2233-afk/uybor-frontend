@@ -3,11 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, MapPin, BedDouble, Bath, Phone, Heart } from 'lucide-react';
 import type { Listing } from '../types';
 import WebApp from '@twa-dev/sdk';
+import { useTranslation } from '../i18n/LanguageContext';
 
 export const Details: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [listing, setListing] = useState<Listing | null>(null);
+  const { t } = useTranslation();
 
   useEffect(() => {
     try {
@@ -78,7 +80,7 @@ export const Details: React.FC = () => {
         </div>
         
         <p className="text-2xl font-bold text-blue-600 mb-4">
-          ${listing.price.toLocaleString()} <span className="text-sm font-normal text-gray-500">/ month</span>
+          ${listing.price.toLocaleString()} <span className="text-sm font-normal text-gray-500">{t('details.month')}</span>
         </p>
 
         <div className="flex items-center text-gray-600 mb-6 bg-gray-50 p-3 rounded-xl">
@@ -90,17 +92,17 @@ export const Details: React.FC = () => {
           <div className="flex flex-col items-center">
             <BedDouble size={24} className="text-gray-400 mb-1" />
             <span className="font-semibold">{listing.bedrooms}</span>
-            <span className="text-xs text-gray-500">Bedrooms</span>
+            <span className="text-xs text-gray-500">{t('details.bedrooms')}</span>
           </div>
           <div className="w-px h-10 bg-gray-100"></div>
           <div className="flex flex-col items-center">
             <Bath size={24} className="text-gray-400 mb-1" />
             <span className="font-semibold">{listing.bathrooms}</span>
-            <span className="text-xs text-gray-500">Bathrooms</span>
+            <span className="text-xs text-gray-500">{t('details.bathrooms')}</span>
           </div>
         </div>
 
-        <h2 className="text-lg font-bold mb-2">Description</h2>
+        <h2 className="text-lg font-bold mb-2">{t('details.description')}</h2>
         <p className="text-gray-600 leading-relaxed text-sm">
           {listing.description}
         </p>
@@ -108,7 +110,7 @@ export const Details: React.FC = () => {
 
       <div className="fixed bottom-0 w-full bg-white border-t border-gray-100 p-4 pb-safe-bottom flex gap-3">
         <button className="flex-1 bg-blue-600 text-white font-semibold py-3.5 rounded-xl shadow-sm shadow-blue-200 active:scale-[0.98] transition-transform">
-          Contact Host
+          {t('details.contact')}
         </button>
         <button className="p-3.5 bg-green-100 text-green-600 rounded-xl active:scale-[0.98] transition-transform">
           <Phone size={24} />

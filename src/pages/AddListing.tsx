@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import { Camera } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import WebApp from '@twa-dev/sdk';
+import { useTranslation } from '../i18n/LanguageContext';
 
 export const AddListing: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     title: '',
     price: '',
@@ -15,22 +17,21 @@ export const AddListing: React.FC = () => {
   });
   
   const user = WebApp?.initDataUnsafe?.user;
-  console.log('Current user:', user);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       if (WebApp && WebApp.showAlert) {
-        WebApp.showAlert('Listing added successfully!');
+        WebApp.showAlert(t('add.success'));
       } else {
-        alert('Listing added successfully!');
+        alert(t('add.success'));
       }
       navigate('/my-listings');
     } catch (error) {
       if (WebApp && WebApp.showAlert) {
-        WebApp.showAlert('Error adding listing');
+        WebApp.showAlert(t('add.error'));
       } else {
-        alert('Error adding listing');
+        alert(t('add.error'));
       }
     }
   };
@@ -42,7 +43,7 @@ export const AddListing: React.FC = () => {
   return (
     <div className="bg-white min-h-screen">
       <div className="sticky top-0 z-10 bg-white/90 backdrop-blur-md border-b border-gray-100 px-4 py-3 flex items-center">
-        <h1 className="text-xl font-bold mx-auto">Add New Listing</h1>
+        <h1 className="text-xl font-bold mx-auto">{t('add.title')}</h1>
       </div>
 
       <form onSubmit={handleSubmit} className="p-4 space-y-5">
@@ -50,26 +51,26 @@ export const AddListing: React.FC = () => {
         {/* Photo Upload Mock */}
         <div className="w-full h-40 bg-gray-50 border-2 border-dashed border-gray-200 rounded-2xl flex flex-col items-center justify-center text-gray-400 active:bg-gray-100 transition-colors">
           <Camera size={32} className="mb-2 text-gray-300" />
-          <span className="font-medium text-sm">Tap to add photos</span>
+          <span className="font-medium text-sm">{t('add.photoHint')}</span>
         </div>
 
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Title</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t('add.fieldTitle')}</label>
             <input 
               required
               name="title"
               value={formData.title}
               onChange={handleChange}
               type="text" 
-              placeholder="e.g. Modern Apartment in Center"
+              placeholder={t('add.fieldTitlePlaceholder')}
               className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none"
             />
           </div>
 
           <div className="flex gap-4">
             <div className="flex-1">
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Price ($)</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t('add.fieldPrice')}</label>
               <input 
                 required
                 name="price"
@@ -81,14 +82,14 @@ export const AddListing: React.FC = () => {
               />
             </div>
             <div className="flex-1">
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Location</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t('add.fieldLocation')}</label>
               <input 
                 required
                 name="location"
                 value={formData.location}
                 onChange={handleChange}
                 type="text" 
-                placeholder="City, District"
+                placeholder={t('add.fieldLocationPlaceholder')}
                 className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none"
               />
             </div>
@@ -96,7 +97,7 @@ export const AddListing: React.FC = () => {
 
           <div className="flex gap-4">
             <div className="flex-1">
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Bedrooms</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t('add.fieldBeds')}</label>
               <select 
                 name="bedrooms"
                 value={formData.bedrooms}
@@ -107,7 +108,7 @@ export const AddListing: React.FC = () => {
               </select>
             </div>
             <div className="flex-1">
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Bathrooms</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t('add.fieldBaths')}</label>
               <select 
                 name="bathrooms"
                 value={formData.bathrooms}
@@ -120,14 +121,14 @@ export const AddListing: React.FC = () => {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t('add.fieldDesc')}</label>
             <textarea 
               required
               name="description"
               value={formData.description}
               onChange={handleChange}
               rows={4}
-              placeholder="Describe your property..."
+              placeholder={t('add.fieldDescPlaceholder')}
               className="w-full p-3 bg-gray-50 border border-gray-100 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none resize-none"
             />
           </div>
@@ -137,7 +138,7 @@ export const AddListing: React.FC = () => {
           type="submit"
           className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold shadow-sm shadow-blue-200 active:scale-[0.98] transition-transform mt-4"
         >
-          Publish Listing
+          {t('add.submit')}
         </button>
       </form>
     </div>
