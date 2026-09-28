@@ -44,6 +44,7 @@ export const Details: React.FC = () => {
         title: '139,900y.e. ga medgaradokda uyimz sotiladi!',
         description: '139,900y.e. ga 81 kvadratli podklyuch yevro remontili uyimz 139,900y.e. ga sotiladi! Srochna variant!',
         price: 139900,
+        currency: 'y.e',
         location: 'Toshkent shahri, Olmazor tumani',
         images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80'],
         bedrooms: 3,
@@ -51,7 +52,16 @@ export const Details: React.FC = () => {
         userId: 'user123',
         createdAt: new Date().toISOString(),
         phone: '+998 90 123 45 67',
-        telegram: 'sardororolov2233_afk'
+        telegram: 'sardororolov2233_afk',
+        goal: 'SOTAMAN',
+        propertyType: 'KVARTIRA',
+        mortgage: true,
+        postedBy: 'Rieltor',
+        buildingType: 'Yangi bino',
+        floor: 4,
+        maxFloors: 6,
+        area: 81,
+        renovation: 'Kapital'
       });
     };
     fetchListing();
@@ -99,10 +109,9 @@ export const Details: React.FC = () => {
         {/* Pagination Dots */}
         <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5">
           <div className="h-1.5 w-6 bg-[#ffde33] rounded-full"></div>
-          <div className="h-1.5 w-1.5 bg-white/60 rounded-full"></div>
-          <div className="h-1.5 w-1.5 bg-white/60 rounded-full"></div>
-          <div className="h-1.5 w-1.5 bg-white/60 rounded-full"></div>
-          <div className="h-1.5 w-1.5 bg-white/60 rounded-full"></div>
+          {listing.images.slice(1).map((_, i) => (
+            <div key={i} className="h-1.5 w-1.5 bg-white/60 rounded-full"></div>
+          ))}
         </div>
       </div>
 
@@ -110,19 +119,25 @@ export const Details: React.FC = () => {
         {/* Tags and Actions Row */}
         <div className="flex justify-between items-start mb-3">
           <div className="flex flex-wrap gap-2">
-            <div className="px-3 py-1 bg-gray-100 rounded-full text-xs font-bold text-gray-900">
-              SOTAMAN
-            </div>
-            <div className="px-3 py-1 bg-gray-100 rounded-full text-xs font-bold text-gray-900">
-              KVARTIRA
-            </div>
-            <div className="px-3 py-1 bg-gray-100 rounded-full text-xs font-bold text-gray-900 flex items-center gap-1 mt-1 w-full sm:w-auto">
-              <Building size={12} />
-              IPOTEKAGA MUMKIN
-            </div>
+            {listing.goal && (
+              <div className="px-3 py-1 bg-gray-100 rounded-full text-xs font-bold text-gray-900">
+                {listing.goal}
+              </div>
+            )}
+            {listing.propertyType && (
+              <div className="px-3 py-1 bg-gray-100 rounded-full text-xs font-bold text-gray-900">
+                {listing.propertyType}
+              </div>
+            )}
+            {listing.mortgage && (
+              <div className="px-3 py-1 bg-gray-100 rounded-full text-xs font-bold text-gray-900 flex items-center gap-1 mt-1 w-full sm:w-auto">
+                <Building size={12} />
+                IPOTEKAGA MUMKIN
+              </div>
+            )}
           </div>
           
-          <div className="flex gap-4 text-gray-700 ml-2">
+          <div className="flex gap-4 text-gray-700 ml-2 shrink-0">
             <Heart size={22} className="cursor-pointer" />
             <MessageCircle size={22} className="cursor-pointer" />
             <Send size={22} className="cursor-pointer" />
@@ -137,51 +152,65 @@ export const Details: React.FC = () => {
           {listing.title}
         </h1>
         <p className="text-[26px] font-extrabold text-gray-900 mb-3">
-          139 900 y.e
+          {listing.price.toLocaleString()} {listing.currency || 'y.e'}
         </p>
 
         {/* Description */}
-        <p className="text-gray-800 text-[15px] leading-snug mb-6">
+        <p className="text-gray-800 text-[15px] leading-snug mb-6 whitespace-pre-wrap">
           {listing.description}
         </p>
 
         {/* Details Table */}
         <div className="space-y-3 mb-8">
-          <div className="flex items-center text-[15px]">
-            <span className="font-semibold text-gray-900 shrink-0">Kim joylashtirdi</span>
-            <div className="flex-1 border-b-2 border-gray-100 mx-3 mb-1"></div>
-            <span className="font-bold text-gray-900 shrink-0">Rieltor</span>
-          </div>
-          <div className="flex items-center text-[15px]">
-            <span className="font-semibold text-gray-900 shrink-0">Kvartira turi</span>
-            <div className="flex-1 border-b-2 border-gray-100 mx-3 mb-1"></div>
-            <span className="font-bold text-gray-900 shrink-0">Yangi bino</span>
-          </div>
-          <div className="flex items-center text-[15px]">
-            <span className="font-semibold text-gray-900 shrink-0">Xonalar soni</span>
-            <div className="flex-1 border-b-2 border-gray-100 mx-3 mb-1"></div>
-            <span className="font-bold text-gray-900 shrink-0">3</span>
-          </div>
-          <div className="flex items-center text-[15px]">
-            <span className="font-semibold text-gray-900 shrink-0">Qavat</span>
-            <div className="flex-1 border-b-2 border-gray-100 mx-3 mb-1"></div>
-            <span className="font-bold text-gray-900 shrink-0">4</span>
-          </div>
-          <div className="flex items-center text-[15px]">
-            <span className="font-semibold text-gray-900 shrink-0">Uyning qavatlari soni</span>
-            <div className="flex-1 border-b-2 border-gray-100 mx-3 mb-1"></div>
-            <span className="font-bold text-gray-900 shrink-0">6</span>
-          </div>
-          <div className="flex items-center text-[15px]">
-            <span className="font-semibold text-gray-900 shrink-0">Maydon, m²</span>
-            <div className="flex-1 border-b-2 border-gray-100 mx-3 mb-1"></div>
-            <span className="font-bold text-gray-900 shrink-0">81</span>
-          </div>
-          <div className="flex items-center text-[15px]">
-            <span className="font-semibold text-gray-900 shrink-0">Ta'mir</span>
-            <div className="flex-1 border-b-2 border-gray-100 mx-3 mb-1"></div>
-            <span className="font-bold text-gray-900 shrink-0">Kapital</span>
-          </div>
+          {listing.postedBy && (
+            <div className="flex items-center text-[15px]">
+              <span className="font-semibold text-gray-900 shrink-0">Kim joylashtirdi</span>
+              <div className="flex-1 border-b-2 border-gray-100 mx-3 mb-1"></div>
+              <span className="font-bold text-gray-900 shrink-0 text-right">{listing.postedBy}</span>
+            </div>
+          )}
+          {listing.buildingType && (
+            <div className="flex items-center text-[15px]">
+              <span className="font-semibold text-gray-900 shrink-0">Kvartira turi</span>
+              <div className="flex-1 border-b-2 border-gray-100 mx-3 mb-1"></div>
+              <span className="font-bold text-gray-900 shrink-0 text-right">{listing.buildingType}</span>
+            </div>
+          )}
+          {listing.bedrooms && (
+            <div className="flex items-center text-[15px]">
+              <span className="font-semibold text-gray-900 shrink-0">Xonalar soni</span>
+              <div className="flex-1 border-b-2 border-gray-100 mx-3 mb-1"></div>
+              <span className="font-bold text-gray-900 shrink-0 text-right">{listing.bedrooms}</span>
+            </div>
+          )}
+          {listing.floor && (
+            <div className="flex items-center text-[15px]">
+              <span className="font-semibold text-gray-900 shrink-0">Qavat</span>
+              <div className="flex-1 border-b-2 border-gray-100 mx-3 mb-1"></div>
+              <span className="font-bold text-gray-900 shrink-0 text-right">{listing.floor}</span>
+            </div>
+          )}
+          {listing.maxFloors && (
+            <div className="flex items-center text-[15px]">
+              <span className="font-semibold text-gray-900 shrink-0">Uyning qavatlari soni</span>
+              <div className="flex-1 border-b-2 border-gray-100 mx-3 mb-1"></div>
+              <span className="font-bold text-gray-900 shrink-0 text-right">{listing.maxFloors}</span>
+            </div>
+          )}
+          {listing.area && (
+            <div className="flex items-center text-[15px]">
+              <span className="font-semibold text-gray-900 shrink-0">Maydon, m²</span>
+              <div className="flex-1 border-b-2 border-gray-100 mx-3 mb-1"></div>
+              <span className="font-bold text-gray-900 shrink-0 text-right">{listing.area}</span>
+            </div>
+          )}
+          {listing.renovation && (
+            <div className="flex items-center text-[15px]">
+              <span className="font-semibold text-gray-900 shrink-0">Ta'mir</span>
+              <div className="flex-1 border-b-2 border-gray-100 mx-3 mb-1"></div>
+              <span className="font-bold text-gray-900 shrink-0 text-right">{listing.renovation}</span>
+            </div>
+          )}
         </div>
 
         {/* Location Section */}
@@ -192,18 +221,9 @@ export const Details: React.FC = () => {
           </button>
         </div>
         
-        <div className="flex items-start text-gray-800 mb-4">
+        <div className="flex items-start text-gray-800 mb-6">
           <MapPin size={20} className="mr-2 shrink-0 mt-0.5" />
           <span className="text-[15px]">{listing.location}</span>
-        </div>
-
-        {/* Mock Map Image */}
-        <div className="w-full h-32 bg-gray-200 rounded-2xl overflow-hidden mb-6">
-          <img 
-            src="https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&q=80" 
-            alt="Map Preview" 
-            className="w-full h-full object-cover opacity-60"
-          />
         </div>
       </div>
 
