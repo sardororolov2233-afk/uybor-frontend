@@ -2,9 +2,10 @@ import React, { useEffect, useState } from 'react';
 import { FilterForm } from '../components/FilterForm';
 import { CompactListingCard } from '../components/CompactListingCard';
 import { OverlayListingCard } from '../components/OverlayListingCard';
+import { SelectSheet } from '../components/SelectSheet';
 import type { Listing } from '../types';
 import { useTranslation } from '../i18n/LanguageContext';
-import { ArrowRight, X, Bookmark } from 'lucide-react';
+import { ArrowRight, X, Bookmark, ChevronDown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 export const Home: React.FC = () => {
@@ -14,6 +15,8 @@ export const Home: React.FC = () => {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [selectedRegion, setSelectedRegion] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
+  const [selectedForWhom, setSelectedForWhom] = useState('');
+  const [activeSelect, setActiveSelect] = useState<'region' | 'district' | 'forWhom' | null>(null);
   const { t } = useTranslation();
   const navigate = useNavigate();
 
@@ -33,6 +36,16 @@ export const Home: React.FC = () => {
     "Navoiy viloyati": ["Navoiy shahri", "Zarafshon", "Karmana", "Qiziltepa", "Nurota", "Xatirchi"],
     "Qoraqalpog'iston": ["Nukus", "Xo'jayli", "Beruniy", "To'rtko'l", "Amudaryo", "Chimboy", "Mo'ynoq"]
   };
+
+  const regionOptions = Object.keys(uzbekistanRegions).map(r => ({ value: r, label: r }));
+  const districtOptions = selectedRegion 
+    ? uzbekistanRegions[selectedRegion as keyof typeof uzbekistanRegions]?.map(d => ({ value: d, label: d })) || []
+    : [];
+  const forWhomOptions = [
+    { value: 'family', label: t('filter.family') },
+    { value: 'student_girls', label: t('filter.studentGirls') },
+    { value: 'student_boys', label: t('filter.studentBoys') }
+  ];
 
   const fetchListings = async () => {
     try {
@@ -158,45 +171,42 @@ export const Home: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-bold text-gray-800 mb-1.5">{t('filter.region')}</label>
-                <select 
-                  value={selectedRegion}
-                  onChange={(e) => {
-                    setSelectedRegion(e.target.value);
-                    setSelectedDistrict('');
-                  }}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm text-gray-700 font-medium appearance-none focus:outline-none focus:border-[#ffde33]"
+                <button 
+                  onClick={() => setActiveSelect('region')}
+                  className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3.5 text-sm font-medium text-left flex justify-between items-center text-gray-900 active:bg-gray-100 transition-colors"
                 >
-                  <option value="">{t('filter.region')}</option>
-                  {Object.keys(uzbekistanRegions).map(region => (
-                    <option key={region} value={region}>{region}</option>
-                  ))}
-                </select>
+                  <span>{selectedRegion || t('filter.region')}</span>
+                  <ChevronDown size={18} className="text-gray-400" />
+                </button>
               </div>
               <div>
                 <label className="block text-sm font-bold text-gray-800 mb-1.5">{t('filter.district')}</label>
-                <select 
-                  value={selectedDistrict}
-                  onChange={(e) => setSelectedDistrict(e.target.value)}
-                  disabled={!selectedRegion}
-                  className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm text-gray-700 font-medium appearance-none focus:outline-none focus:border-[#ffde33] disabled:opacity-50 disabled:bg-gray-100"
+                <button 
+                  onClick={() => selectedRegion && setActiveSelect('district')}
+                  className={`w-full bg-gray-50 border border-gray-100 rounded-xl p-3.5 text-sm font-medium text-left flex justify-between items-center transition-colors ${
+                    selectedRegion ? 'text-gray-900 active:bg-gray-100' : 'text-gray-400 opacity-70'
+                  }`}
                 >
-                  <option value="">{t('filter.district')}</option>
-                  {selectedRegion && uzbekistanRegions[selectedRegion as keyof typeof uzbekistanRegions]?.map(district => (
-                    <option key={district} value={district}>{district}</option>
-                  ))}
-                </select>
+                  <span>{selectedDistrict || t('filter.district')}</span>
+                  <ChevronDown size={18} className="text-gray-400" />
+                </button>
               </div>
             </div>
 
             {/* Target Audience (Kimlar uchun) */}
             <div>
               <label className="block text-sm font-bold text-gray-800 mb-1.5">{t('filter.forWhom')}</label>
-              <select className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm text-gray-700 font-medium appearance-none focus:outline-none focus:border-[#ffde33]">
-                <option value="">{t('filter.forWhomSelect')}</option>
-                <option value="family">{t('filter.family')}</option>
-                <option value="student_girls">{t('filter.studentGirls')}</option>
-                <option value="student_boys">{t('filter.studentBoys')}</option>
-              </select>
+              <button 
+                onClick={() => setActiveSelect('forWhom')}
+                className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3.5 text-sm font-medium text-left flex justify-between items-center text-gray-900 active:bg-gray-100 transition-colors"
+              >
+                <span>
+                  {selectedForWhom 
+                    ? forWhomOptions.find(o => o.value === selectedForWhom)?.label 
+                    : t('filter.forWhomSelect')}
+                </span>
+                <ChevronDown size={18} className="text-gray-400" />
+              </button>
             </div>
 
             {/* Price */}
@@ -225,6 +235,35 @@ export const Home: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Select Sheets */}
+      <SelectSheet
+        isOpen={activeSelect === 'region'}
+        onClose={() => setActiveSelect(null)}
+        title={t('filter.region')}
+        options={regionOptions}
+        selectedValue={selectedRegion}
+        onSelect={(val) => {
+          setSelectedRegion(val);
+          setSelectedDistrict(''); // Reset district when region changes
+        }}
+      />
+      <SelectSheet
+        isOpen={activeSelect === 'district'}
+        onClose={() => setActiveSelect(null)}
+        title={t('filter.district')}
+        options={districtOptions}
+        selectedValue={selectedDistrict}
+        onSelect={setSelectedDistrict}
+      />
+      <SelectSheet
+        isOpen={activeSelect === 'forWhom'}
+        onClose={() => setActiveSelect(null)}
+        title={t('filter.forWhom')}
+        options={forWhomOptions}
+        selectedValue={selectedForWhom}
+        onSelect={setSelectedForWhom}
+      />
     </div>
   );
 };
