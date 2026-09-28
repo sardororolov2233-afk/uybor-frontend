@@ -9,6 +9,8 @@ export interface Listing {
   bathrooms: number;
   userId: string;
   createdAt: string;
+  phone?: string;
+  telegram?: string;
 }
 
 export interface User {
