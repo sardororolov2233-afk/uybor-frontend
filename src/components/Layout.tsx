@@ -1,6 +1,6 @@
 import React from 'react';
 import { Outlet, NavLink, useLocation } from 'react-router-dom';
-import { Home, Wallet, Clock, User } from 'lucide-react';
+import { Home, PlusCircle, MessageSquare, User } from 'lucide-react';
 import WebApp from '@twa-dev/sdk';
 import { useTranslation } from '../i18n/LanguageContext';
 import { Header } from './Header';
@@ -45,23 +45,23 @@ export const Layout: React.FC = () => {
             </NavLink>
             
             <NavLink 
-              to="/wallet" 
+              to="/add" 
               className={({ isActive }) => 
                 `flex flex-col items-center justify-center w-[72px] h-[56px] rounded-[24px] transition-all ${isActive ? 'bg-[#0066b2] text-white' : 'text-gray-500 hover:text-gray-700'}`
               }
             >
-              <Wallet size={22} className="mb-0.5" />
-              <span className="text-[10px] font-medium">To'ldirish</span>
+              <PlusCircle size={22} className="mb-0.5" />
+              <span className="text-[10px] font-medium">{t('nav.add') || "Qo'shish"}</span>
             </NavLink>
 
             <NavLink 
-              to="/orders" 
+              to="/messages" 
               className={({ isActive }) => 
                 `flex flex-col items-center justify-center w-[72px] h-[56px] rounded-[24px] transition-all ${isActive ? 'bg-[#0066b2] text-white' : 'text-gray-500 hover:text-gray-700'}`
               }
             >
-              <Clock size={22} className="mb-0.5" />
-              <span className="text-[10px] font-medium">Buyurtmalar</span>
+              <MessageSquare size={22} className="mb-0.5" />
+              <span className="text-[10px] font-medium">{t('nav.messages') || 'Xabarlar'}</span>
             </NavLink>
             
             <NavLink 
