@@ -117,7 +117,7 @@ export const Home: React.FC = () => {
 
       {/* Full Screen Filter Modal */}
       {isFilterOpen && (
-        <div className="fixed inset-0 bg-white z-50 flex flex-col animate-in slide-in-from-bottom-full duration-300">
+        <div className="fixed inset-0 bg-white z-[100] flex flex-col animate-in slide-in-from-bottom-full duration-300">
           <div className="flex items-center gap-4 px-4 py-4 border-b border-gray-100">
             <button onClick={() => setIsFilterOpen(false)} className="text-gray-700 active:scale-95">
               <X size={24} />

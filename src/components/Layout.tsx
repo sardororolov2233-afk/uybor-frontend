@@ -27,7 +27,7 @@ export const Layout: React.FC = () => {
     <div className="flex flex-col min-h-screen bg-[#f5f8ff] pb-safe">
       {showHeader && <Header />}
       
-      <main className="flex-1 overflow-y-auto pb-24">
+      <main className="flex-1 overflow-y-auto pb-32">
         <Outlet />
       </main>
 
