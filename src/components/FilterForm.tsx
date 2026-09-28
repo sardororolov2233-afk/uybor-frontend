@@ -66,19 +66,35 @@ export const FilterForm: React.FC<FilterFormProps> = ({ onSearch, onOpenFilter }
 
       {/* Horizontal Chips */}
       <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-1">
-        <button className="flex items-center gap-1.5 whitespace-nowrap bg-gray-100 px-3 py-1.5 rounded-full text-sm font-medium text-gray-700">
-          <Building2 size={14} />
-          {t('filter.type')}
-          <span className="ml-1 text-[10px]">▼</span>
-        </button>
-        <button className="flex items-center gap-1.5 whitespace-nowrap bg-gray-100 px-3 py-1.5 rounded-full text-sm font-medium text-gray-700">
-          <User size={14} />
-          {t('filter.owner')}
-        </button>
-        <button className="flex items-center gap-1.5 whitespace-nowrap bg-gray-100 px-3 py-1.5 rounded-full text-sm font-medium text-gray-700">
-          <HomeIcon size={14} />
-          {t('filter.mortgage')}
-        </button>
+        {activeTab === 'rent' ? (
+          <>
+            <button className="flex items-center gap-1.5 whitespace-nowrap bg-gray-100 px-3 py-1.5 rounded-full text-sm font-medium text-gray-700">
+              {t('filter.family')}
+            </button>
+            <button className="flex items-center gap-1.5 whitespace-nowrap bg-gray-100 px-3 py-1.5 rounded-full text-sm font-medium text-gray-700">
+              {t('filter.studentGirls')}
+            </button>
+            <button className="flex items-center gap-1.5 whitespace-nowrap bg-gray-100 px-3 py-1.5 rounded-full text-sm font-medium text-gray-700">
+              {t('filter.studentBoys')}
+            </button>
+          </>
+        ) : (
+          <>
+            <button className="flex items-center gap-1.5 whitespace-nowrap bg-gray-100 px-3 py-1.5 rounded-full text-sm font-medium text-gray-700">
+              <Building2 size={14} />
+              {t('filter.type')}
+              <span className="ml-1 text-[10px]">▼</span>
+            </button>
+            <button className="flex items-center gap-1.5 whitespace-nowrap bg-gray-100 px-3 py-1.5 rounded-full text-sm font-medium text-gray-700">
+              <User size={14} />
+              {t('filter.owner')}
+            </button>
+            <button className="flex items-center gap-1.5 whitespace-nowrap bg-gray-100 px-3 py-1.5 rounded-full text-sm font-medium text-gray-700">
+              <HomeIcon size={14} />
+              {t('filter.mortgage')}
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
