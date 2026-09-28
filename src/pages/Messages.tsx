@@ -1,19 +1,201 @@
-import React from 'react';
-import { useTranslation } from '../i18n/LanguageContext';
+import React, { useState, useEffect, useRef } from 'react';
+import { Sparkles, Send, Bot } from 'lucide-react';
+import { ListingCard } from '../components/ListingCard';
+import type { Listing } from '../types';
+
+interface Message {
+  id: string;
+  sender: 'ai' | 'user';
+  text: string;
+  type: 'text' | 'listing';
+  listingData?: Listing;
+  timestamp: string;
+}
+
+const mockListing: Listing = {
+  id: '1',
+  title: 'Yunusobodda 2 xonali kvartira',
+  description: 'Yangi ta\'mirlangan, barcha sharoitlarga ega kvartira ijaraga beriladi.',
+  price: 400,
+  currency: '$',
+  location: 'Toshkent, Yunusobod',
+  images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80'],
+  bedrooms: 2,
+  bathrooms: 1,
+  userId: 'ai_bot',
+  createdAt: new Date().toISOString()
+};
 
 export const Messages: React.FC = () => {
-  const { t } = useTranslation();
+  const [messages, setMessages] = useState<Message[]>([
+    {
+      id: 'm1',
+      sender: 'ai',
+      text: "Assalomu alaykum! Men Uybor AI yordamchisiman. Sizga qanday uy topishda yordam bera olaman? Masalan: 'Yunusoboddan 400$ atrofida kvartira kerak' deb yozishingiz mumkin.",
+      type: 'text',
+      timestamp: '10:00'
+    }
+  ]);
+  const [inputText, setInputText] = useState('');
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, isTyping]);
+
+  const handleSend = () => {
+    if (!inputText.trim()) return;
+
+    const userMsg: Message = {
+      id: Date.now().toString(),
+      sender: 'user',
+      text: inputText,
+      type: 'text',
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    };
+
+    setMessages(prev => [...prev, userMsg]);
+    setInputText('');
+    setIsTyping(true);
+
+    // Mock AI Response
+    setTimeout(() => {
+      setIsTyping(false);
+      
+      const aiTextMsg: Message = {
+        id: (Date.now() + 1).toString(),
+        sender: 'ai',
+        text: "Albatta! Sizning so'rovingiz bo'yicha bazadan ajoyib variant topdim. Marhamat, ko'rib chiqing:",
+        type: 'text',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+      
+      const aiListingMsg: Message = {
+        id: (Date.now() + 2).toString(),
+        sender: 'ai',
+        text: "",
+        type: 'listing',
+        listingData: mockListing,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      };
+
+      setMessages(prev => [...prev, aiTextMsg, aiListingMsg]);
+    }, 1500);
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSend();
+    }
+  };
 
   return (
-    <div className="bg-[#f5f8ff] min-h-screen p-4 flex flex-col items-center justify-center">
-      <div className="bg-white p-8 rounded-3xl shadow-sm text-center max-w-sm w-full">
-        <div className="w-16 h-16 bg-blue-50 text-[#0066b2] rounded-full flex items-center justify-center mx-auto mb-4">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+    <div className="bg-[#f5f8ff] min-h-screen flex flex-col pt-safe relative">
+      {/* Fixed Header */}
+      <div className="bg-white/80 backdrop-blur-md border-b border-gray-100 px-4 py-3 flex items-center justify-between sticky top-0 z-20">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center">
+            <Sparkles size={20} />
+          </div>
+          <div>
+            <h1 className="text-lg font-bold text-gray-900">Uybor AI</h1>
+            <p className="text-[11px] text-green-500 font-semibold flex items-center gap-1">
+              <span className="w-2 h-2 rounded-full bg-green-500 inline-block"></span> Online
+            </p>
+          </div>
         </div>
-        <h2 className="text-xl font-bold mb-2 text-gray-900">{t('nav.messages') || 'Xabarlar'}</h2>
-        <p className="text-gray-500 text-sm">
-          Sizda hozircha hech qanday xabar yo'q.
-        </p>
+      </div>
+
+      {/* Chat Messages */}
+      <div className="flex-1 p-4 space-y-4 pb-[160px] overflow-y-auto">
+        <div className="text-center text-xs font-semibold text-gray-400 my-4">Bugun</div>
+        
+        {messages.map((msg) => (
+          <div key={msg.id} className={`flex w-full ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
+            {msg.sender === 'ai' && (
+              <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 mr-2 self-end mb-1">
+                <Bot size={16} />
+              </div>
+            )}
+            
+            <div className={`max-w-[75%] ${msg.sender === 'user' ? 'order-1' : 'order-2'}`}>
+              {msg.type === 'text' ? (
+                <div 
+                  className={`p-3.5 rounded-2xl text-[15px] shadow-sm leading-snug ${
+                    msg.sender === 'user' 
+                      ? 'bg-blue-600 text-white rounded-br-sm' 
+                      : 'bg-white text-gray-800 rounded-bl-sm border border-gray-100'
+                  }`}
+                >
+                  {msg.text}
+                </div>
+              ) : (
+                <div className="w-full sm:w-64 max-w-full">
+                  {msg.listingData && <ListingCard listing={msg.listingData} />}
+                </div>
+              )}
+              <div className={`text-[10px] text-gray-400 mt-1 font-medium ${msg.sender === 'user' ? 'text-right mr-1' : 'ml-1'}`}>
+                {msg.timestamp}
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {isTyping && (
+          <div className="flex w-full justify-start">
+            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center shrink-0 mr-2 self-end mb-1">
+              <Bot size={16} />
+            </div>
+            <div className="bg-white border border-gray-100 p-4 rounded-2xl rounded-bl-sm shadow-sm flex items-center gap-1.5">
+              <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+              <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+              <div className="w-2 h-2 bg-gray-300 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Fixed Input Area */}
+      <div className="fixed bottom-[96px] left-0 right-0 px-4 z-40">
+        {/* Quick Suggestions (Optional) */}
+        {messages.length === 1 && (
+          <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-3 mb-1 px-1">
+            <button onClick={() => setInputText('Yunusoboddan 2 xonali ijara')} className="shrink-0 bg-white shadow-sm border border-gray-100 text-blue-600 text-xs font-semibold px-4 py-2 rounded-full active:scale-95 transition-transform">
+              Yunusobod 2 xonali
+            </button>
+            <button onClick={() => setInputText('Arzon hovli sotib olmoqchiman')} className="shrink-0 bg-white shadow-sm border border-gray-100 text-blue-600 text-xs font-semibold px-4 py-2 rounded-full active:scale-95 transition-transform">
+              Arzon hovli
+            </button>
+          </div>
+        )}
+
+        <div className="bg-white rounded-[24px] p-1.5 shadow-lg shadow-gray-200/50 border border-gray-100 flex items-end">
+          <textarea
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyDown={handleKeyPress}
+            placeholder="AI yordamchiga yozing..."
+            className="flex-1 bg-transparent border-none focus:ring-0 resize-none max-h-32 min-h-[44px] p-3 text-[15px] outline-none"
+            rows={1}
+            style={{ height: 'auto' }}
+          />
+          <button 
+            onClick={handleSend}
+            disabled={!inputText.trim() || isTyping}
+            className={`p-3 rounded-full shrink-0 m-1 transition-colors ${
+              inputText.trim() && !isTyping ? 'bg-blue-600 text-white shadow-md active:scale-95' : 'bg-gray-100 text-gray-400'
+            }`}
+          >
+            <Send size={18} className={inputText.trim() && !isTyping ? 'ml-0.5' : ''} />
+          </button>
+        </div>
       </div>
     </div>
   );
