@@ -12,8 +12,27 @@ export const Home: React.FC = () => {
   const [vipListings, setVipListings] = useState<Listing[]>([]);
   const [featuredListings, setFeaturedListings] = useState<Listing[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [selectedRegion, setSelectedRegion] = useState('');
+  const [selectedDistrict, setSelectedDistrict] = useState('');
   const { t } = useTranslation();
   const navigate = useNavigate();
+
+  const uzbekistanRegions = {
+    "Toshkent shahri": ["Yunusobod", "Chilonzor", "Mirzo Ulug'bek", "Yashnobod", "Sirg'ali", "Yakkasaroy", "Olmazor", "Uchtepa", "Shayxontohur", "Mirobod", "Bektemir", "Yangihayot"],
+    "Toshkent viloyati": ["Zangiota", "Qibray", "Toshkent tumani", "Parkent", "Yangiyo'l", "Chirchiq", "Angren", "Olmaliq", "Ohangaron", "Bo'stonliq"],
+    "Samarqand viloyati": ["Samarqand shahri", "Urgut", "Tayloq", "Jomboy", "Pastdarg'om", "Bulung'ur", "Kattaqo'rg'on"],
+    "Farg'ona viloyati": ["Farg'ona shahri", "Marg'ilon", "Qo'qon", "Buvayda", "Oltiariq", "Qo'shtepa", "Rishton"],
+    "Andijon viloyati": ["Andijon shahri", "Asaka", "Shahrixon", "Xo'jaobod", "Buloqboshi", "Baliqchi"],
+    "Namangan viloyati": ["Namangan shahri", "Chust", "Kosonsoy", "Uychi", "To'raqo'rg'on", "Pop"],
+    "Buxoro viloyati": ["Buxoro shahri", "G'ijduvon", "Vobkent", "Jondor", "Kogon", "Peshku", "Qorako'l"],
+    "Xorazm viloyati": ["Urganch", "Xiva", "Xonqa", "Shovot", "Hazorasp", "Bog'ot"],
+    "Qashqadaryo viloyati": ["Qarshi", "Shahrisabz", "Kitob", "Yakkabog'", "Qamashi", "Chiroqchi"],
+    "Surxondaryo viloyati": ["Termiz", "Denov", "Boysun", "Sho'rchi", "Qumqo'rg'on", "Sherobod"],
+    "Jizzax viloyati": ["Jizzax shahri", "Zomin", "Forish", "Paxtakor", "G'allaorol"],
+    "Sirdaryo viloyati": ["Guliston", "Sirdaryo", "Boyovut", "Oqoltin", "Sayxunobod"],
+    "Navoiy viloyati": ["Navoiy shahri", "Zarafshon", "Karmana", "Qiziltepa", "Nurota", "Xatirchi"],
+    "Qoraqalpog'iston": ["Nukus", "Xo'jayli", "Beruniy", "To'rtko'l", "Amudaryo", "Chimboy", "Mo'ynoq"]
+  };
 
   const fetchListings = async () => {
     try {
@@ -115,9 +134,9 @@ export const Home: React.FC = () => {
         </section>
       </div>
 
-      {/* Full Screen Filter Modal */}
+      {/* Filter Modal */}
       {isFilterOpen && (
-        <div className="fixed inset-0 bg-white z-[100] flex flex-col animate-in slide-in-from-bottom-full duration-300">
+        <div className="fixed inset-0 bg-white z-40 flex flex-col animate-in slide-in-from-bottom-full duration-300 pb-[88px]">
           <div className="flex items-center gap-4 px-4 py-4 border-b border-gray-100">
             <button onClick={() => setIsFilterOpen(false)} className="text-gray-700 active:scale-95">
               <X size={24} />
@@ -125,7 +144,7 @@ export const Home: React.FC = () => {
             <h2 className="text-lg font-bold">{t('filter.title')}</h2>
           </div>
           
-          <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          <div className="flex-1 overflow-y-auto p-4 space-y-5">
             {/* Saved Searches */}
             <button className="w-full flex items-center justify-between bg-gray-100 rounded-xl px-4 py-3">
               <div className="flex items-center gap-2 text-gray-700 font-semibold text-sm">
@@ -139,41 +158,53 @@ export const Home: React.FC = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-bold text-gray-800 mb-1.5">{t('filter.region')}</label>
-                <select className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm text-gray-500 font-medium appearance-none focus:outline-none">
-                  <option>{t('filter.region')}</option>
+                <select 
+                  value={selectedRegion}
+                  onChange={(e) => {
+                    setSelectedRegion(e.target.value);
+                    setSelectedDistrict('');
+                  }}
+                  className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm text-gray-700 font-medium appearance-none focus:outline-none focus:border-[#ffde33]"
+                >
+                  <option value="">{t('filter.region')}</option>
+                  {Object.keys(uzbekistanRegions).map(region => (
+                    <option key={region} value={region}>{region}</option>
+                  ))}
                 </select>
               </div>
               <div>
                 <label className="block text-sm font-bold text-gray-800 mb-1.5">{t('filter.district')}</label>
-                <select className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm text-gray-500 font-medium appearance-none focus:outline-none">
-                  <option>{t('filter.district')}</option>
+                <select 
+                  value={selectedDistrict}
+                  onChange={(e) => setSelectedDistrict(e.target.value)}
+                  disabled={!selectedRegion}
+                  className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm text-gray-700 font-medium appearance-none focus:outline-none focus:border-[#ffde33] disabled:opacity-50 disabled:bg-gray-100"
+                >
+                  <option value="">{t('filter.district')}</option>
+                  {selectedRegion && uzbekistanRegions[selectedRegion as keyof typeof uzbekistanRegions]?.map(district => (
+                    <option key={district} value={district}>{district}</option>
+                  ))}
                 </select>
               </div>
             </div>
 
-            {/* Condition */}
+            {/* Target Audience (Kimlar uchun) */}
             <div>
-              <label className="block text-sm font-bold text-gray-800 mb-1.5">{t('filter.condition')}</label>
-              <select className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm text-gray-500 font-medium appearance-none focus:outline-none">
-                <option>{t('filter.conditionSelect')}</option>
+              <label className="block text-sm font-bold text-gray-800 mb-1.5">{t('filter.forWhom')}</label>
+              <select className="w-full bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm text-gray-700 font-medium appearance-none focus:outline-none focus:border-[#ffde33]">
+                <option value="">{t('filter.forWhomSelect')}</option>
+                <option value="family">{t('filter.family')}</option>
+                <option value="student_girls">{t('filter.studentGirls')}</option>
+                <option value="student_boys">{t('filter.studentBoys')}</option>
               </select>
-            </div>
-
-            {/* Area */}
-            <div>
-              <label className="block text-sm font-bold text-gray-800 mb-1.5">{t('filter.area')}</label>
-              <div className="flex gap-3">
-                <input type="number" placeholder={t('filter.from')} className="flex-1 bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm focus:outline-none" />
-                <input type="number" placeholder={t('filter.to')} className="flex-1 bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm focus:outline-none" />
-              </div>
             </div>
 
             {/* Price */}
             <div>
               <label className="block text-sm font-bold text-gray-800 mb-1.5">{t('filter.price')}</label>
               <div className="flex gap-3 mb-3">
-                <input type="number" placeholder={t('filter.from')} className="flex-1 bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm focus:outline-none" />
-                <input type="number" placeholder={t('filter.to')} className="flex-1 bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm focus:outline-none" />
+                <input type="number" placeholder={t('filter.from')} className="flex-1 bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm focus:outline-none focus:border-[#ffde33]" />
+                <input type="number" placeholder={t('filter.to')} className="flex-1 bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm focus:outline-none focus:border-[#ffde33]" />
               </div>
               <div className="flex bg-gray-100 rounded-lg p-1">
                 <button className="flex-1 py-2 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900">so'm</button>
@@ -181,15 +212,14 @@ export const Home: React.FC = () => {
               </div>
             </div>
             
-            <div className="h-10"></div> {/* Bottom padding */}
           </div>
           
           {/* Bottom Actions */}
-          <div className="border-t border-gray-100 p-4 pb-safe flex gap-3 bg-white">
-            <button className="flex-1 bg-gray-100 text-gray-600 font-bold py-3.5 rounded-xl flex items-center justify-center gap-2">
+          <div className="border-t border-gray-100 p-4 bg-white flex gap-3 shadow-[0_-4px_10px_rgba(0,0,0,0.03)] z-10">
+            <button className="flex-1 bg-gray-100 text-gray-600 font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform">
               <Bookmark size={16} /> {t('filter.save')}
             </button>
-            <button onClick={() => setIsFilterOpen(false)} className="flex-[2] bg-[#ffde33] text-gray-900 font-bold py-3.5 rounded-xl shadow-sm">
+            <button onClick={() => setIsFilterOpen(false)} className="flex-[2] bg-[#ffde33] text-gray-900 font-bold py-3.5 rounded-xl shadow-sm active:scale-95 transition-transform">
               {t('filter.apply')}
             </button>
           </div>

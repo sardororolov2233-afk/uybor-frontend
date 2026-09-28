@@ -38,6 +38,11 @@ export const translations = {
     'filter.save': "Saqlash",
     'filter.apply': "Qo'llash",
     
+    'filter.forWhom': 'Kimlar uchun',
+    'filter.forWhomSelect': 'Tanlang',
+    'filter.family': 'Oila',
+    'filter.studentGirls': 'Student qizlar',
+    'filter.studentBoys': 'Student bolalar',
     // Listing Card
     'card.beds': 'xona',
     'card.baths': 'hammom',
@@ -110,6 +115,12 @@ export const translations = {
     'filter.price': "Цена",
     'filter.save': "Сохранить",
     'filter.apply': "Применить",
+    
+    'filter.forWhom': 'Для кого',
+    'filter.forWhomSelect': 'Выберите',
+    'filter.family': 'Семья',
+    'filter.studentGirls': 'Студентки',
+    'filter.studentBoys': 'Студенты',
 
     // Listing Card
     'card.beds': 'комн.',
