@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import WebApp from '@twa-dev/sdk';
-import { translations, Language, TranslationKey } from './translations';
+import { translations } from './translations';
+import type { Language, TranslationKey } from './translations';
 
 interface LanguageContextType {
   language: Language;

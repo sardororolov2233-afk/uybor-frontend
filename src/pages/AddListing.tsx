@@ -16,8 +16,6 @@ export const AddListing: React.FC = () => {
     bathrooms: '1',
   });
   
-  const user = WebApp?.initDataUnsafe?.user;
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {

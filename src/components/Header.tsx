@@ -4,7 +4,7 @@ import { Moon, ChevronDown } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
 
 export const Header: React.FC = () => {
-  const { language, setLanguage, t } = useTranslation();
+  const { language, setLanguage } = useTranslation();
   const user = WebApp?.initDataUnsafe?.user;
 
   // Placeholder values if outside Telegram

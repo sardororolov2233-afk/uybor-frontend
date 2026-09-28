@@ -73,7 +73,7 @@ export const Layout: React.FC = () => {
               <User size={22} className="mb-0.5" />
               <span className="text-[10px] font-medium">{t('nav.profile') || 'Profil'}</span>
             </NavLink>
-          </div>
+          </nav>
         </div>
       )}
     </div>
