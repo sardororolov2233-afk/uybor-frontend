@@ -1,18 +1,42 @@
 export const translations = {
   uz: {
     // Navigation
-    'nav.explore': 'Qidiruv',
-    'nav.add': "E'lon berish",
+    'nav.explore': 'Menyu',
+    'nav.search': 'Qidirish',
+    'nav.add': "Qo'shish",
+    'nav.messages': 'Xabarlar',
     'nav.profile': 'Profil',
     
     // Home & Search
-    'search.placeholder': "Joylashuv yoki sarlavha bo'yicha qidirish...",
+    'search.placeholder': "Qidirish...",
     'home.newListings': "Yangi e'lonlar",
     'home.vipListings': "VIP e'lonlar",
     'home.featured': "Tavsiya etilgan e'lonlar",
     'home.seeAll': "Hammasi",
     'home.noListings': "Hech qanday e'lon topilmadi.",
     'home.loading': "Yuklanmoqda...",
+    
+    // Quick Filters
+    'filter.sale': "Sotuv",
+    'filter.rent': "Ijara",
+    'filter.daily': "Kunlik",
+    'filter.type': "Ko'chmas mulk turi",
+    'filter.owner': "Egasi",
+    'filter.mortgage': "Ipoteka",
+
+    // Detailed Filter
+    'filter.title': "Filtrlar",
+    'filter.savedSearches': "Saqlangan qidiruvlar",
+    'filter.region': "Viloyat",
+    'filter.district': "Tuman",
+    'filter.condition': "Ta'mir",
+    'filter.conditionSelect': "Ta'mirni tanlang",
+    'filter.area': "Maydon, m²",
+    'filter.from': "dan",
+    'filter.to': "gacha",
+    'filter.price': "Narx",
+    'filter.save': "Saqlash",
+    'filter.apply': "Qo'llash",
     
     // Listing Card
     'card.beds': 'xona',
@@ -50,12 +74,14 @@ export const translations = {
   },
   ru: {
     // Navigation
-    'nav.explore': 'Поиск',
+    'nav.explore': 'Меню',
+    'nav.search': 'Поиск',
     'nav.add': 'Добавить',
+    'nav.messages': 'Сообщения',
     'nav.profile': 'Профиль',
     
     // Home & Search
-    'search.placeholder': 'Поиск по локации или названию...',
+    'search.placeholder': 'Поиск...',
     'home.newListings': 'Новые объявления',
     'home.vipListings': 'VIP объявления',
     'home.featured': 'Рекомендуемые',
@@ -63,6 +89,28 @@ export const translations = {
     'home.noListings': 'Объявления не найдены.',
     'home.loading': 'Загрузка...',
     
+    // Quick Filters
+    'filter.sale': "Продажа",
+    'filter.rent': "Аренда",
+    'filter.daily': "Посуточно",
+    'filter.type': "Тип недв-ти",
+    'filter.owner': "Владелец",
+    'filter.mortgage': "Ипотека",
+
+    // Detailed Filter
+    'filter.title': "Фильтры",
+    'filter.savedSearches': "Сохраненные поиски",
+    'filter.region': "Область",
+    'filter.district': "Район",
+    'filter.condition': "Ремонт",
+    'filter.conditionSelect': "Выберите ремонт",
+    'filter.area': "Площадь, м²",
+    'filter.from': "от",
+    'filter.to': "до",
+    'filter.price': "Цена",
+    'filter.save': "Сохранить",
+    'filter.apply': "Применить",
+
     // Listing Card
     'card.beds': 'комн.',
     'card.baths': 'ванн.',
