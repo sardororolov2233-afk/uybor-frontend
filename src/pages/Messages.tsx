@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, Send, Bot } from 'lucide-react';
+import { Sparkles, Send, Bot, Bell } from 'lucide-react';
 import { ListingCard } from '../components/ListingCard';
+import { sendAIChatMessage, saveAIPreferences } from '../api/ai';
 import type { Listing } from '../types';
 
 interface Message {
@@ -10,40 +11,23 @@ interface Message {
   type: 'text' | 'listing';
   listingData?: Listing;
   timestamp: string;
+  canSubscribe?: boolean;
+  searchPrompt?: string;
 }
-
-const mockListing: Listing = {
-  id: '1',
-  title: 'Yunusobodda 2 xonali kvartira',
-  description: 'Yangi ta\'mirlangan, barcha sharoitlarga ega kvartira ijaraga beriladi.',
-  price: 400,
-  currency: 'USD',
-  category: 'RENT',
-  property_type: 'APARTMENT',
-  address: 'Toshkent, Yunusobod',
-  images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80'],
-  rooms: 2,
-  area: null,
-  lat: null,
-  lon: null,
-  status: 'ACTIVE',
-  user_id: 'ai_bot',
-  created_at: new Date().toISOString(),
-  updated_at: new Date().toISOString(),
-};
 
 export const Messages: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'm1',
       sender: 'ai',
-      text: "Assalomu alaykum! Men Uybor AI yordamchisiman. Sizga qanday uy topishda yordam bera olaman? Masalan: 'Yunusoboddan 400$ atrofida kvartira kerak' deb yozishingiz mumkin.",
+      text: "Assalomu alaykum! Men UyBor AI maslahatchisiman. Sizga qanday uy topishda yordam bera olaman? Masalan: 'Yunusoboddan 400$ atrofida 2 xonali ijara' deb yozishingiz mumkin.",
       type: 'text',
       timestamp: '10:00'
     }
   ]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [subscribedPrompt, setSubscribedPrompt] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -54,13 +38,14 @@ export const Messages: React.FC = () => {
     scrollToBottom();
   }, [messages, isTyping]);
 
-  const handleSend = () => {
-    if (!inputText.trim()) return;
+  const handleSend = async () => {
+    const textToSend = inputText.trim();
+    if (!textToSend || isTyping) return;
 
     const userMsg: Message = {
       id: Date.now().toString(),
       sender: 'user',
-      text: inputText,
+      text: textToSend,
       type: 'text',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
@@ -69,29 +54,80 @@ export const Messages: React.FC = () => {
     setInputText('');
     setIsTyping(true);
 
-    // Mock AI Response
-    setTimeout(() => {
-      setIsTyping(false);
-      
+    try {
+      // Chat tarixini tayyorlash
+      const history = messages
+        .filter(m => m.type === 'text')
+        .slice(-6)
+        .map(m => ({
+          role: m.sender === 'user' ? ('user' as const) : ('assistant' as const),
+          content: m.text,
+        }));
+
+      // Haqiqiy backend AI so'rovi
+      const res = await sendAIChatMessage(textToSend, history);
+
       const aiTextMsg: Message = {
         id: (Date.now() + 1).toString(),
         sender: 'ai',
-        text: "Albatta! Sizning so'rovingiz bo'yicha bazadan ajoyib variant topdim. Marhamat, ko'rib chiqing:",
+        text: res.reply || "Qidiruv natijalari tayyor:",
         type: 'text',
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      };
-      
-      const aiListingMsg: Message = {
-        id: (Date.now() + 2).toString(),
-        sender: 'ai',
-        text: "",
-        type: 'listing',
-        listingData: mockListing,
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        canSubscribe: true,
+        searchPrompt: textToSend,
       };
 
-      setMessages(prev => [...prev, aiTextMsg, aiListingMsg]);
-    }, 1500);
+      const newMsgs: Message[] = [aiTextMsg];
+
+      // Tavsiya etilgan e'lonlarni qo'shish
+      if (res.recommended_listings && res.recommended_listings.length > 0) {
+        res.recommended_listings.forEach((listing, idx) => {
+          newMsgs.push({
+            id: (Date.now() + 2 + idx).toString(),
+            sender: 'ai',
+            text: '',
+            type: 'listing',
+            listingData: listing,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          });
+        });
+      }
+
+      setMessages(prev => [...prev, ...newMsgs]);
+    } catch (error) {
+      console.error('AI chat error:', error);
+      setMessages(prev => [
+        ...prev,
+        {
+          id: (Date.now() + 1).toString(),
+          sender: 'ai',
+          text: "Kechirasiz, so'rovingizni qayta ishlashda xatolik yuz berdi. Iltimos qaytadan urinib ko'ring.",
+          type: 'text',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }
+      ]);
+    } finally {
+      setIsTyping(false);
+    }
+  };
+
+  const handleSubscribe = async (prompt: string) => {
+    try {
+      await saveAIPreferences(prompt);
+      setSubscribedPrompt(prompt);
+      setMessages(prev => [
+        ...prev,
+        {
+          id: Date.now().toString(),
+          sender: 'ai',
+          text: `🔔 Qidiruv talablaringiz saqlandi! Yangi mos e'lon qo'shilishi bilan Telegram botingizga darhol xabar yuboriladi.`,
+          type: 'text',
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        }
+      ]);
+    } catch (error) {
+      console.error('Subscribe error:', error);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -132,14 +168,26 @@ export const Messages: React.FC = () => {
             
             <div className={`max-w-[75%] ${msg.sender === 'user' ? 'order-1' : 'order-2'}`}>
               {msg.type === 'text' ? (
-                <div 
-                  className={`p-3.5 rounded-2xl text-[15px] shadow-sm leading-snug ${
-                    msg.sender === 'user' 
-                      ? 'bg-blue-600 text-white rounded-br-sm' 
-                      : 'bg-white text-gray-800 rounded-bl-sm border border-gray-100'
-                  }`}
-                >
-                  {msg.text}
+                <div>
+                  <div 
+                    className={`p-3.5 rounded-2xl text-[15px] shadow-sm leading-snug ${
+                      msg.sender === 'user' 
+                        ? 'bg-blue-600 text-white rounded-br-sm' 
+                        : 'bg-white text-gray-800 rounded-bl-sm border border-gray-100'
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
+                  {msg.canSubscribe && msg.searchPrompt && (
+                    <button
+                      onClick={() => handleSubscribe(msg.searchPrompt!)}
+                      disabled={subscribedPrompt === msg.searchPrompt}
+                      className="mt-2 flex items-center gap-1.5 text-xs bg-white border border-blue-200 text-blue-600 px-3 py-1.5 rounded-full shadow-sm active:scale-95 transition-all font-medium"
+                    >
+                      <Bell size={13} />
+                      {subscribedPrompt === msg.searchPrompt ? '✅ Bildirishnoma yoqilgan' : 'Yangi e\'lonlar uchun eslatma yoqish'}
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="w-full sm:w-64 max-w-full">
