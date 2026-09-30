@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import WebApp from '@twa-dev/sdk';
 import { Layout } from './components/Layout';
 import { Home } from './pages/Home';
 import { Details } from './pages/Details';
@@ -14,9 +15,42 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const init = async () => {
+      console.log('=== UYBOR INIT START ===');
+      console.log('WebApp available:', !!WebApp);
+      console.log('WebApp.initData:', WebApp?.initData ? `"${WebApp.initData.substring(0, 50)}..."` : 'EMPTY');
+      console.log('WebApp.initDataUnsafe:', JSON.stringify(WebApp?.initDataUnsafe));
+      console.log('WebApp.initDataUnsafe.user:', JSON.stringify(WebApp?.initDataUnsafe?.user));
+      console.log('isLoggedIn:', isLoggedIn());
+
       if (!isLoggedIn()) {
-        await loginWithTelegram();
+        console.log('Not logged in, attempting loginWithTelegram...');
+        const result = await loginWithTelegram();
+        console.log('loginWithTelegram result:', result ? 'SUCCESS' : 'FAILED (null)');
+        
+        if (result) {
+          console.log('User from backend:', JSON.stringify(result.user));
+        } else {
+          console.warn('Login failed! Saving Telegram user data as fallback...');
+          // Zaxira: Telegram ma'lumotlarini to'g'ridan-to'g'ri saqlash
+          const tgUser = WebApp?.initDataUnsafe?.user;
+          if (tgUser) {
+            console.log('Saving Telegram user as fallback:', JSON.stringify(tgUser));
+            localStorage.setItem('uybor_user', JSON.stringify({
+              telegram_id: tgUser.id,
+              first_name: tgUser.first_name || '',
+              last_name: tgUser.last_name || '',
+              username: tgUser.username || '',
+              photo_url: tgUser.photo_url || null,
+            }));
+          } else {
+            console.error('No Telegram user data available either!');
+          }
+        }
+      } else {
+        console.log('Already logged in, stored user:', localStorage.getItem('uybor_user'));
       }
+
+      console.log('=== UYBOR INIT COMPLETE ===');
       setReady(true);
     };
     init();
@@ -47,3 +81,4 @@ const App: React.FC = () => {
 };
 
 export default App;
+
