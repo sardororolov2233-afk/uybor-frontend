@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, MapPin, Heart, X, Copy, Check, MessageCircle, Send } from 'lucide-react';
+import { ChevronLeft, MapPin, Heart, X, Copy, Check, MessageCircle, Send, PhoneCall } from 'lucide-react';
 import type { Listing } from '../types';
 import WebApp from '@twa-dev/sdk';
 import { fetchListingById } from '../api/listings';
+import { fetchFavorites, addFavorite, removeFavorite } from '../api/favorites';
+import { isLoggedIn } from '../api/auth';
 
 // Simple Telegram Icon component since lucide doesn't have a perfect match
 const TelegramIcon = ({ className }: { className?: string }) => (
@@ -20,6 +22,10 @@ export const Details: React.FC = () => {
   const [phoneModalOpen, setPhoneModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState(false);
+
+  // New States
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   useEffect(() => {
     try {
@@ -44,6 +50,14 @@ export const Details: React.FC = () => {
       try {
         const data = await fetchListingById(id);
         setListing(data);
+
+        // Check if favorite
+        if (isLoggedIn()) {
+          const favs = await fetchFavorites();
+          if (favs.some((f: any) => f.listing_id === id)) {
+            setIsFavorite(true);
+          }
+        }
       } catch (err) {
         console.error('Error loading listing:', err);
         setError(true);
@@ -56,7 +70,10 @@ export const Details: React.FC = () => {
   const username = listing?.users?.username || '';
 
   const handleTelegram = () => {
-    if (!username) return;
+    if (!username) {
+      alert('Sotuvchining Telegram username ko\'rsatilmagan');
+      return;
+    }
     const url = `https://t.me/${username}`;
     if (WebApp && WebApp.openTelegramLink) {
       WebApp.openTelegramLink(url);
@@ -72,6 +89,43 @@ export const Details: React.FC = () => {
         setTimeout(() => setCopied(false), 2000);
       });
     }
+  };
+
+  const handleToggleFavorite = async () => {
+    if (!id) return;
+    if (!isLoggedIn()) {
+      alert("Iltimos, avval tizimga kiring!");
+      return;
+    }
+    try {
+      if (isFavorite) {
+        await removeFavorite(id);
+        setIsFavorite(false);
+      } else {
+        await addFavorite(id);
+        setIsFavorite(true);
+      }
+    } catch (err) {
+      console.error("Error toggling favorite:", err);
+    }
+  };
+
+  const handleShare = () => {
+    const url = window.location.href;
+    if (navigator.share) {
+      navigator.share({
+        title: listing?.title || "UyBor E'lon",
+        url: url
+      }).catch(err => console.error(err));
+    } else {
+      navigator.clipboard.writeText(url).then(() => {
+        alert("Havola nusxalandi!");
+      });
+    }
+  };
+
+  const handleReport = () => {
+    alert("Shikoyatingiz qabul qilindi. Tez orada ko'rib chiqiladi.");
   };
 
   if (error) return (
@@ -92,22 +146,33 @@ export const Details: React.FC = () => {
       {/* Image Carousel Area */}
       <div className="relative h-72 bg-gray-200">
         {listing.images && listing.images.length > 0 && (
-          <img src={listing.images[0]} alt={listing.title} className="w-full h-full object-cover" />
+          <img 
+            src={listing.images[currentImageIndex]} 
+            alt={listing.title} 
+            className="w-full h-full object-cover transition-opacity duration-300" 
+          />
         )}
         <button 
           onClick={() => navigate(-1)}
-          className="absolute top-4 left-4 p-1 text-gray-800"
+          className="absolute top-4 left-4 p-1 text-gray-800 bg-white/50 backdrop-blur-md rounded-full active:scale-95"
         >
           <ChevronLeft size={32} />
         </button>
         
         {/* Pagination Dots */}
-        <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5">
-          <div className="h-1.5 w-6 bg-[#ffde33] rounded-full"></div>
-          {listing.images.slice(1).map((_, i) => (
-            <div key={i} className="h-1.5 w-1.5 bg-white/60 rounded-full"></div>
-          ))}
-        </div>
+        {listing.images && listing.images.length > 1 && (
+          <div className="absolute bottom-4 left-0 right-0 flex justify-center gap-1.5 px-4">
+            {listing.images.map((_, i) => (
+              <button 
+                key={i} 
+                onClick={() => setCurrentImageIndex(i)}
+                className={`h-1.5 transition-all rounded-full ${
+                  currentImageIndex === i ? 'w-6 bg-[#ffde33]' : 'w-1.5 bg-white/60'
+                }`}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="p-4">
@@ -127,9 +192,13 @@ export const Details: React.FC = () => {
           </div>
           
           <div className="flex gap-4 text-gray-700 ml-2 shrink-0">
-            <Heart size={22} className="cursor-pointer" />
-            <MessageCircle size={22} className="cursor-pointer" />
-            <Send size={22} className="cursor-pointer" />
+            <Heart 
+              size={24} 
+              className={`cursor-pointer transition-colors active:scale-90 ${isFavorite ? 'text-red-500 fill-red-500' : ''}`} 
+              onClick={handleToggleFavorite}
+            />
+            <MessageCircle size={24} className="cursor-pointer active:scale-90" onClick={handleTelegram} />
+            <Send size={24} className="cursor-pointer active:scale-90" onClick={handleShare} />
           </div>
         </div>
 
@@ -186,7 +255,10 @@ export const Details: React.FC = () => {
         {/* Location Section */}
         <div className="mb-4 flex justify-between items-center">
           <h2 className="text-lg font-bold text-gray-900">Joylashuv</h2>
-          <button className="bg-red-50 text-[#ff3366] font-bold text-sm px-4 py-2 rounded-xl">
+          <button 
+            onClick={handleReport}
+            className="bg-red-50 text-[#ff3366] font-bold text-sm px-4 py-2 rounded-xl active:scale-95 transition-transform"
+          >
             Shikoyat qilish
           </button>
         </div>
@@ -207,7 +279,7 @@ export const Details: React.FC = () => {
           Sotuvchiga yozing
         </button>
         <button 
-          onClick={() => phone && setPhoneModalOpen(true)}
+          onClick={() => phone ? setPhoneModalOpen(true) : alert('Telefon raqam ko\'rsatilmagan')}
           className="w-full bg-black text-white font-bold py-3.5 rounded-xl active:scale-[0.98] transition-transform"
         >
           Qo'ng'iroq qiling
@@ -237,27 +309,26 @@ export const Details: React.FC = () => {
               <span className="text-2xl font-bold tracking-wider text-gray-900">{phone || "Raqam ko'rsatilmagan"}</span>
             </div>
 
-            <button 
-              onClick={copyPhone}
-              disabled={!phone}
-              className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-all ${
-                copied 
-                  ? 'bg-green-500 text-white shadow-lg shadow-green-200' 
-                  : 'bg-[#ffde33] text-gray-900 shadow-sm'
-              }`}
-            >
-              {copied ? (
-                <>
-                  <Check size={20} />
-                  Nusxa olindi!
-                </>
-              ) : (
-                <>
-                  <Copy size={20} />
-                  Nusxa olish
-                </>
-              )}
-            </button>
+            <div className="flex gap-2">
+              <a 
+                href={`tel:${phone}`}
+                className="flex-[2] py-4 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-all bg-[#ffde33] text-gray-900 shadow-sm"
+              >
+                <PhoneCall size={20} />
+                Qo'ng'iroq
+              </a>
+              <button 
+                onClick={copyPhone}
+                disabled={!phone}
+                className={`flex-1 py-4 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-all ${
+                  copied 
+                    ? 'bg-green-500 text-white' 
+                    : 'bg-gray-100 text-gray-900'
+                }`}
+              >
+                {copied ? <Check size={20} /> : <Copy size={20} />}
+              </button>
+            </div>
           </div>
         </div>
       )}

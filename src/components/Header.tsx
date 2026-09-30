@@ -1,11 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import WebApp from '@twa-dev/sdk';
-import { Moon, ChevronDown } from 'lucide-react';
+import { Moon, Sun, ChevronDown, Heart } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
 import { getUser } from '../api/auth';
 
 export const Header: React.FC = () => {
   const { language, setLanguage } = useTranslation();
+  
+  const [currency, setCurrency] = useState<'UZS' | 'USD'>(() => {
+    return (localStorage.getItem('currency') as 'UZS' | 'USD') || 'UZS';
+  });
+
+  const [isDark, setIsDark] = useState(() => {
+    return localStorage.getItem('theme') === 'dark' || document.documentElement.classList.contains('dark');
+  });
+
+  useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDark]);
   
   // 1) Server-authenticated user from localStorage (primary source)
   const savedUser = getUser();
@@ -22,34 +38,61 @@ export const Header: React.FC = () => {
   
   const displayName = fullName.length > 12 ? fullName.substring(0, 10) + '...' : fullName;
 
+  const toggleCurrency = () => {
+    const nextCurr = currency === 'UZS' ? 'USD' : 'UZS';
+    setCurrency(nextCurr);
+    localStorage.setItem('currency', nextCurr);
+    // For MVP, reloading might be needed if other components read from localStorage. Or we dispatch an event.
+    window.dispatchEvent(new Event('currencyChange'));
+  };
+
+  const toggleDarkMode = () => {
+    const nextDark = !isDark;
+    setIsDark(nextDark);
+    localStorage.setItem('theme', nextDark ? 'dark' : 'light');
+  };
+
   return (
-    <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100">
+    <div className="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 transition-colors">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-full border-2 border-blue-400 p-0.5 overflow-hidden">
           <img src={photoUrl} alt="Avatar" className="w-full h-full rounded-full object-cover" />
         </div>
         <div className="flex flex-col">
-          <span className="text-xs text-gray-500 font-medium">Salom 👋</span>
-          <span className="font-bold text-sm uppercase text-gray-900 tracking-wide">{displayName}</span>
+          <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">Salom 👋</span>
+          <span className="font-bold text-sm uppercase text-gray-900 dark:text-white tracking-wide">{displayName}</span>
         </div>
       </div>
       
       <div className="flex items-center gap-2">
         <button 
           onClick={() => setLanguage(language === 'uz' ? 'ru' : 'uz')}
-          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#eef5fd] text-gray-800 rounded-full text-xs font-semibold active:scale-95 transition-transform"
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-[#eef5fd] dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-full text-xs font-semibold active:scale-95 transition-transform"
         >
           <span>{language === 'uz' ? '🇺🇿' : '🇷🇺'}</span>
           <span className="uppercase">{language}</span>
-          <ChevronDown size={14} className="text-gray-500" />
+          <ChevronDown size={14} className="text-gray-500 dark:text-gray-400" />
         </button>
         
-        <div className="px-3 py-1.5 bg-[#eef5fd] text-gray-800 rounded-full text-xs font-semibold">
-          UZS
-        </div>
+        <button 
+          onClick={toggleCurrency}
+          className="px-3 py-1.5 bg-[#eef5fd] dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-full text-xs font-semibold active:scale-95 transition-transform"
+        >
+          {currency}
+        </button>
         
-        <button className="p-1.5 bg-[#eef5fd] text-gray-800 rounded-full active:scale-95 transition-transform">
-          <Moon size={16} />
+        <button 
+          onClick={() => window.location.href = '/favorites'}
+          className="p-1.5 bg-red-50 dark:bg-red-900/30 text-red-500 rounded-full active:scale-95 transition-transform"
+        >
+          <Heart size={16} />
+        </button>
+        
+        <button 
+          onClick={toggleDarkMode}
+          className="p-1.5 bg-[#eef5fd] dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-full active:scale-95 transition-transform"
+        >
+          {isDark ? <Sun size={16} /> : <Moon size={16} />}
         </button>
       </div>
     </div>

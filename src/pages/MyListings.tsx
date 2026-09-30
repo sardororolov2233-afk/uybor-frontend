@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import WebApp from '@twa-dev/sdk';
 import type { Listing } from '../types';
 import { useTranslation } from '../i18n/LanguageContext';
@@ -7,6 +8,7 @@ import { LogOut, Edit3, Trash2, Zap, Image as ImageIcon, CheckCircle, Copy, Chec
 import { ListingCard } from '../components/ListingCard';
 import { fetchMyListings, deleteListingApi } from '../api/listings';
 import { getUser, logout } from '../api/auth';
+import { verifyReceiptPayment } from '../api/ai';
 
 export const MyListings: React.FC = () => {
   const [listings, setListings] = useState<Listing[]>([]);
@@ -16,9 +18,11 @@ export const MyListings: React.FC = () => {
   // Balance state
   const [balance, setBalance] = useState(0);
   const [amount, setAmount] = useState('');
-  const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'checking' | 'success'>('idle');
+  const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'checking' | 'success' | 'error'>('idle');
+  const [uploadError, setUploadError] = useState('');
   const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
 
   const { t } = useTranslation();
   
@@ -44,11 +48,13 @@ export const MyListings: React.FC = () => {
   }, []);
 
   const handleDelete = async (listingId: string) => {
-    try {
-      await deleteListingApi(listingId);
-      setListings(prev => prev.filter(l => l.id !== listingId));
-    } catch (error) {
-      console.error('Error deleting listing:', error);
+    if (window.confirm("Rostdan ham bu e'lonni o'chirmoqchimisiz?")) {
+      try {
+        await deleteListingApi(listingId);
+        setListings(prev => prev.filter(l => l.id !== listingId));
+      } catch (error) {
+        console.error('Error deleting listing:', error);
+      }
     }
   };
 
@@ -59,18 +65,70 @@ export const MyListings: React.FC = () => {
     });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEdit = (id: string) => {
+    navigate(`/edit/${id}`);
+  };
+
+  const handlePromoteTop = async (id: string) => {
+    if (balance < 20000) {
+      alert("Hisobingizda yetarli mablag' yo'q. Iltimos hisobingizni to'ldiring.");
+      setActiveTab('balance');
+      return;
+    }
+    
+    if (window.confirm("E'lonni TOP qilish narxi 20,000 so'm. Hisobingizdan yechiladi. Tasdiqlaysizmi?")) {
+      try {
+        // Backendga so'rov yuborish (biz updateListingApi ni ishlatsak bo'ladi)
+        // Ammo aslida backendda alohida endpoint bo'lishi kerak pul yechish uchun.
+        // Hozircha MVP uchun faqat local balansni kamaytirib, statusni o'zgartiramiz:
+        await import('../api/listings').then(m => m.updateListingApi(id, { status: 'PROMOTED' }));
+        setBalance(prev => prev - 20000);
+        alert("E'loningiz TOP ga chiqarildi!");
+        // Update local listing
+        setListings(prev => prev.map(l => l.id === id ? { ...l, status: 'PROMOTED' } : l));
+      } catch (err) {
+        console.error(err);
+        alert("Xatolik yuz berdi");
+      }
+    }
+  };
+
+  const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = error => reject(error);
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setUploadState('checking');
-      // Simulate AI checking
-      setTimeout(() => {
-        setUploadState('success');
-        setBalance(prev => prev + (parseInt(amount.replace(/\D/g, '')) || 50000));
-        setTimeout(() => {
-          setUploadState('idle');
-          setAmount('');
-        }, 3000);
-      }, 2500);
+      setUploadError('');
+      try {
+        const file = e.target.files[0];
+        const base64Image = await fileToBase64(file);
+        const expected = parseInt(amount.replace(/\D/g, '')) || undefined;
+        
+        const res = await verifyReceiptPayment(base64Image, undefined, expected);
+        
+        if (res.analysis?.status === 'APPROVED') {
+          setUploadState('success');
+          setBalance(prev => prev + (res.analysis.amount || expected || 0));
+          setTimeout(() => {
+            setUploadState('idle');
+            setAmount('');
+          }, 3000);
+        } else {
+          setUploadState('error');
+          setUploadError(res.analysis?.reason || 'To\'lov tasdiqlanmadi');
+        }
+      } catch (err) {
+        console.error(err);
+        setUploadState('error');
+        setUploadError('Tizim xatosi. Qayta urinib ko\'ring.');
+      }
     }
   };
 
@@ -138,7 +196,10 @@ export const MyListings: React.FC = () => {
                     
                     {/* Action Buttons for User's own listing */}
                     <div className="flex justify-between items-center mt-3 gap-2 px-1 pb-1">
-                      <button className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-semibold text-sm active:scale-95 transition-transform">
+                      <button 
+                        onClick={() => handleEdit(listing.id)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-semibold text-sm active:scale-95 transition-transform"
+                      >
                         <Edit3 size={16} />
                         Tahrirlash
                       </button>
@@ -149,7 +210,10 @@ export const MyListings: React.FC = () => {
                         <Trash2 size={16} />
                         O'chirish
                       </button>
-                      <button className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-[#ffde33] text-gray-900 rounded-xl font-bold text-sm active:scale-95 transition-transform shadow-sm">
+                      <button 
+                        onClick={() => handlePromoteTop(listing.id)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-[#ffde33] text-gray-900 rounded-xl font-bold text-sm active:scale-95 transition-transform shadow-sm"
+                      >
                         <Zap size={16} />
                         Top
                       </button>
@@ -237,6 +301,8 @@ export const MyListings: React.FC = () => {
                   ? 'border-green-500 bg-green-50' 
                   : uploadState === 'checking'
                   ? 'border-blue-400 bg-blue-50'
+                  : uploadState === 'error'
+                  ? 'border-red-400 bg-red-50'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >
@@ -275,6 +341,22 @@ export const MyListings: React.FC = () => {
                   </div>
                   <p className="text-green-700 font-bold text-center">Tasdiqlandi!</p>
                   <p className="text-green-600 text-sm mt-1">Hisobingiz muvaffaqiyatli to'ldirildi</p>
+                </>
+              )}
+
+              {uploadState === 'error' && (
+                <>
+                  <div className="w-14 h-14 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-3">
+                    <X size={28} />
+                  </div>
+                  <p className="text-red-700 font-bold text-center">Xatolik yuz berdi</p>
+                  <p className="text-red-600 text-sm mt-1 text-center">{uploadError}</p>
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); setUploadState('idle'); }} 
+                    className="mt-3 px-4 py-1.5 bg-white rounded-lg shadow-sm text-sm font-semibold"
+                  >
+                    Qayta urinish
+                  </button>
                 </>
               )}
             </div>

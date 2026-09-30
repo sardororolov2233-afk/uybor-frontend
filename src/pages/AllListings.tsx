@@ -6,16 +6,54 @@ import { ChevronLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { fetchListings } from '../api/listings';
 
+import { useLocation } from 'react-router-dom';
+
 export const AllListings: React.FC = () => {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const load = async () => {
       try {
-        const data = await fetchListings();
+        const stateFilters = location.state;
+        const queryParams: Record<string, string | number> = {};
+        
+        if (stateFilters?.currentFilters) {
+          if (stateFilters.currentFilters.category === 'sale') queryParams.category = 'SALE';
+          if (stateFilters.currentFilters.category === 'rent') queryParams.category = 'RENT';
+          
+          if (stateFilters.currentFilters.propertyType && stateFilters.currentFilters.propertyType !== 'all') {
+            const propMap: Record<string, string> = {
+              apartment: 'APARTMENT', house: 'HOUSE', commercial: 'COMMERCIAL', land: 'LAND'
+            };
+            queryParams.property_type = propMap[stateFilters.currentFilters.propertyType] || stateFilters.currentFilters.propertyType;
+          }
+        }
+        
+        if (stateFilters?.priceTo) queryParams.price_max = parseInt(stateFilters.priceTo);
+
+        let data = await fetchListings(queryParams);
+
+        if (stateFilters?.currentFilters?.query) {
+          const q = stateFilters.currentFilters.query.toLowerCase();
+          data = data.filter(l => 
+            l.title.toLowerCase().includes(q) || 
+            l.description.toLowerCase().includes(q) ||
+            l.address.toLowerCase().includes(q)
+          );
+        }
+
+        if (stateFilters?.selectedRegion || stateFilters?.selectedDistrict) {
+          data = data.filter(l => {
+            if (stateFilters.selectedDistrict) return l.address.includes(stateFilters.selectedDistrict);
+            if (stateFilters.selectedRegion) return l.address.includes(stateFilters.selectedRegion);
+            return true;
+          });
+        }
+        
         setListings(data);
       } catch (error) {
         console.error('Error loading listings:', error);
@@ -24,7 +62,7 @@ export const AllListings: React.FC = () => {
       }
     };
     load();
-  }, []);
+  }, [location.state]);
 
   return (
     <div className="bg-white min-h-screen">

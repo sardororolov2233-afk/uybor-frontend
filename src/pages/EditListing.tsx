@@ -1,18 +1,20 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Camera, ChevronLeft, Home, Hourglass, Handshake, Map as MapIcon, ChevronRight, ChevronDown, X } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import WebApp from '@twa-dev/sdk';
 import { useTranslation } from '../i18n/LanguageContext';
 import { SelectSheet } from '../components/SelectSheet';
-import { createListing } from '../api/listings';
+import { fetchListingById, updateListingApi } from '../api/listings';
 
-export const AddListing: React.FC = () => {
+export const EditListing: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
   
-  const [step, setStep] = useState(1);
-  const [goal, setGoal] = useState('');
-  const [propertyType, setPropertyType] = useState('');
+  const [step, setStep] = useState(3); // Start directly at step 3 for edit
+  const [goal, setGoal] = useState('sell');
+  const [propertyType, setPropertyType] = useState('apartment');
+  const [loading, setLoading] = useState(true);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -56,6 +58,37 @@ export const AddListing: React.FC = () => {
     ? uzbekistanRegions[formData.region as keyof typeof uzbekistanRegions]?.map(d => ({ value: d, label: d })) || []
     : [];
   const countryOptions = [{ value: "O'zbekiston", label: "O'zbekiston" }, { value: "Qozog'iston", label: "Qozog'iston" }, { value: "Tojikiston", label: "Tojikiston" }];
+
+  useEffect(() => {
+    if (!id) return;
+    const load = async () => {
+      try {
+        const data = await fetchListingById(id);
+        const [c, r, d] = (data.address || '').split(', ');
+        setFormData({
+          title: data.title || '',
+          description: data.description || '',
+          whoPosted: 'egasi',
+          area: (data.area || '').toString(),
+          price: (data.price || '').toString(),
+          currency: data.currency === 'USD' ? 'y.e' : 'so\'m',
+          floors: (data.rooms || '').toString(),
+          country: c || 'O\'zbekiston',
+          region: r || '',
+          district: d || '',
+          phone: data.users?.phone_number || '+998',
+        });
+        setImages(data.images || []);
+        setPropertyType(data.property_type?.toLowerCase() || 'apartment');
+        setGoal(data.category === 'SALE' ? 'sell' : 'rent_out');
+      } catch (err) {
+        console.error('Error loading listing to edit:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [id]);
   
   const handleGoalSelect = (selectedGoal: string) => {
     setGoal(selectedGoal);
@@ -110,23 +143,25 @@ export const AddListing: React.FC = () => {
         land: 'LAND',
       };
 
-      await createListing({
-        title: formData.title,
-        description: formData.description,
-        price: parseFloat(formData.price),
-        currency: formData.currency === "so'm" ? 'UZS' : 'USD',
-        category,
-        property_type: propTypeMap[propertyType] || 'APARTMENT',
-        rooms: parseInt(formData.floors) || 1,
-        area: parseFloat(formData.area) || null,
-        address: [formData.country, formData.region, formData.district].filter(Boolean).join(', '),
-        images: images,
-      });
+      if (id) {
+        await updateListingApi(id, {
+          title: formData.title,
+          description: formData.description,
+          price: parseFloat(formData.price),
+          currency: formData.currency === "so'm" ? 'UZS' : 'USD',
+          category,
+          property_type: propTypeMap[propertyType] || 'APARTMENT',
+          rooms: parseInt(formData.floors) || 1,
+          area: parseFloat(formData.area) || null,
+          address: [formData.country, formData.region, formData.district].filter(Boolean).join(', '),
+          images: images,
+        });
+      }
 
       if (WebApp && WebApp.showAlert) {
-        WebApp.showAlert(t('add.success'));
+        WebApp.showAlert("E'lon muvaffaqiyatli saqlandi!");
       } else {
-        alert(t('add.success'));
+        alert("E'lon muvaffaqiyatli saqlandi!");
       }
       navigate('/my-listings');
     } catch (error) {
@@ -228,6 +263,14 @@ export const AddListing: React.FC = () => {
   }
 
   // Step 3
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen bg-white">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white min-h-screen pb-32">
       {renderHeader()}

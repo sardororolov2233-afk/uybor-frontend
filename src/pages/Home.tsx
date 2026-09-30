@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { FilterForm } from '../components/FilterForm';
+import { FilterForm, FilterState } from '../components/FilterForm';
 import { CompactListingCard } from '../components/CompactListingCard';
 import { OverlayListingCard } from '../components/OverlayListingCard';
 import { SelectSheet } from '../components/SelectSheet';
@@ -14,13 +14,29 @@ export const Home: React.FC = () => {
   const [vipListings, setVipListings] = useState<Listing[]>([]);
   const [featuredListings, setFeaturedListings] = useState<Listing[]>([]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+
+  // Full filter state
+  const [currentFilters, setCurrentFilters] = useState<FilterState>({
+    query: '',
+    category: 'sale',
+    rentFilter: null,
+    isOwner: false,
+    isMortgage: false,
+    propertyType: 'all',
+  });
+
+  // Modal specific state
   const [selectedRegion, setSelectedRegion] = useState('');
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [selectedForWhom, setSelectedForWhom] = useState('');
   const [activeSelect, setActiveSelect] = useState<'region' | 'district' | 'forWhom' | null>(null);
-  const [loading, setLoading] = useState(true);
-  const { t } = useTranslation();
-  const navigate = useNavigate();
+  
+  const [priceFrom, setPriceFrom] = useState('');
+  const [priceTo, setPriceTo] = useState('');
+  const [currency, setCurrency] = useState<'so\'m' | 'y.e'>('so\'m');
 
   const uzbekistanRegions = {
     "Toshkent shahri": ["Yunusobod", "Chilonzor", "Mirzo Ulug'bek", "Yashnobod", "Sirg'ali", "Yakkasaroy", "Olmazor", "Uchtepa", "Shayxontohur", "Mirobod", "Bektemir", "Yangihayot"],
@@ -52,8 +68,54 @@ export const Home: React.FC = () => {
   const loadListings = async () => {
     try {
       setLoading(true);
-      const allListings = await fetchListings();
       
+      const queryParams: Record<string, string | number> = {};
+      
+      if (currentFilters.category === 'sale') queryParams.category = 'SALE';
+      if (currentFilters.category === 'rent') queryParams.category = 'RENT';
+      // If daily, maybe a specific type, skipping for now
+      
+      if (currentFilters.propertyType && currentFilters.propertyType !== 'all') {
+        const propMap: Record<string, string> = {
+          apartment: 'APARTMENT',
+          house: 'HOUSE',
+          commercial: 'COMMERCIAL',
+          land: 'LAND'
+        };
+        queryParams.property_type = propMap[currentFilters.propertyType] || currentFilters.propertyType;
+      }
+      
+      if (priceTo) queryParams.price_max = parseInt(priceTo);
+      // Backend does not currently support `price_min`, `query`, or complex location filters, 
+      // but we send what it supports and do the rest in memory for MVP or just wait for backend support.
+      
+      let allListings = await fetchListings(queryParams);
+      
+      // Client-side filtering for unsupported params
+      if (currentFilters.query) {
+        const q = currentFilters.query.toLowerCase();
+        allListings = allListings.filter(l => 
+          l.title.toLowerCase().includes(q) || 
+          l.description.toLowerCase().includes(q) ||
+          l.address.toLowerCase().includes(q)
+        );
+      }
+      
+      if (currentFilters.isOwner) {
+        // e.g. we can check if listing doesn't have 'rieltor' somewhere, or we can assume backend users
+        // For MVP, if there is a 'whoPosted' field or similar, we'd check it.
+        // Assuming we have no exact field, we do a basic mock filter or skip.
+        // allListings = allListings.filter(l => l.user_id !== null);
+      }
+
+      if (selectedRegion || selectedDistrict) {
+        allListings = allListings.filter(l => {
+          if (selectedDistrict) return l.address.includes(selectedDistrict);
+          if (selectedRegion) return l.address.includes(selectedRegion);
+          return true;
+        });
+      }
+
       setNewListings(allListings.slice(0, 10));
       setVipListings(allListings.slice(0, 3));
       setFeaturedListings(allListings.slice(0, 4));
@@ -64,22 +126,27 @@ export const Home: React.FC = () => {
     }
   };
 
+  // Reload when main filters change
   useEffect(() => {
     loadListings();
-  }, []);
+  }, [currentFilters]);
 
-  const handleSearch = (query: string) => {
-    console.log('search', query);
+  const handleApplyModalFilters = () => {
+    setIsFilterOpen(false);
     loadListings();
   };
 
+  const handleSaveSearch = () => {
+    navigate('/saved-searches');
+  };
+
   const openAllListings = () => {
-    navigate('/all-listings');
+    navigate('/all-listings', { state: { currentFilters, selectedRegion, selectedDistrict, priceFrom, priceTo, currency, selectedForWhom } });
   };
 
   return (
     <div className="bg-white min-h-screen">
-      <FilterForm onSearch={handleSearch} onOpenFilter={() => setIsFilterOpen(true)} />
+      <FilterForm onFiltersChange={setCurrentFilters} onOpenFilter={() => setIsFilterOpen(true)} />
       
       {loading ? (
         <div className="flex justify-center p-12">
@@ -161,7 +228,10 @@ export const Home: React.FC = () => {
           
           <div className="flex-1 overflow-y-auto p-4 space-y-5">
             {/* Saved Searches */}
-            <button className="w-full flex items-center justify-between bg-gray-100 rounded-xl px-4 py-3">
+            <button 
+              onClick={handleSaveSearch}
+              className="w-full flex items-center justify-between bg-gray-100 rounded-xl px-4 py-3 active:bg-gray-200 transition-colors"
+            >
               <div className="flex items-center gap-2 text-gray-700 font-semibold text-sm">
                 <Bookmark size={16} className="text-[#ffde33]" fill="#ffde33" />
                 {t('filter.savedSearches')}
@@ -215,12 +285,34 @@ export const Home: React.FC = () => {
             <div>
               <label className="block text-sm font-bold text-gray-800 mb-1.5">{t('filter.price')}</label>
               <div className="flex gap-3 mb-3">
-                <input type="number" placeholder={t('filter.from')} className="flex-1 bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm focus:outline-none focus:border-[#ffde33]" />
-                <input type="number" placeholder={t('filter.to')} className="flex-1 bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm focus:outline-none focus:border-[#ffde33]" />
+                <input 
+                  type="number" 
+                  value={priceFrom}
+                  onChange={(e) => setPriceFrom(e.target.value)}
+                  placeholder={t('filter.from')} 
+                  className="flex-1 bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm focus:outline-none focus:border-[#ffde33]" 
+                />
+                <input 
+                  type="number" 
+                  value={priceTo}
+                  onChange={(e) => setPriceTo(e.target.value)}
+                  placeholder={t('filter.to')} 
+                  className="flex-1 bg-gray-50 border border-gray-100 rounded-xl p-3 text-sm focus:outline-none focus:border-[#ffde33]" 
+                />
               </div>
               <div className="flex bg-gray-100 rounded-lg p-1">
-                <button className="flex-1 py-2 text-sm font-semibold rounded-md text-gray-500 hover:text-gray-900">so'm</button>
-                <button className="flex-1 py-2 text-sm font-semibold rounded-md bg-white text-gray-900 shadow-sm">y.e</button>
+                <button 
+                  onClick={() => setCurrency('so\'m')}
+                  className={`flex-1 py-2 text-sm font-semibold rounded-md transition-colors ${currency === 'so\'m' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                >
+                  so'm
+                </button>
+                <button 
+                  onClick={() => setCurrency('y.e')}
+                  className={`flex-1 py-2 text-sm font-semibold rounded-md transition-colors ${currency === 'y.e' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-900'}`}
+                >
+                  y.e
+                </button>
               </div>
             </div>
             
@@ -228,10 +320,16 @@ export const Home: React.FC = () => {
           
           {/* Bottom Actions */}
           <div className="border-t border-gray-100 p-4 bg-white flex gap-3 shadow-[0_-4px_10px_rgba(0,0,0,0.03)] z-10">
-            <button className="flex-1 bg-gray-100 text-gray-600 font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform">
+            <button 
+              onClick={handleSaveSearch}
+              className="flex-1 bg-gray-100 text-gray-600 font-bold py-3.5 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-transform"
+            >
               <Bookmark size={16} /> {t('filter.save')}
             </button>
-            <button onClick={() => setIsFilterOpen(false)} className="flex-[2] bg-[#ffde33] text-gray-900 font-bold py-3.5 rounded-xl shadow-sm active:scale-95 transition-transform">
+            <button 
+              onClick={handleApplyModalFilters}
+              className="flex-[2] bg-[#ffde33] text-gray-900 font-bold py-3.5 rounded-xl shadow-sm active:scale-95 transition-transform"
+            >
               {t('filter.apply')}
             </button>
           </div>

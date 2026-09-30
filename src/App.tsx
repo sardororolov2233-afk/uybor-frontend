@@ -5,9 +5,12 @@ import { Layout } from './components/Layout';
 import { Home } from './pages/Home';
 import { Details } from './pages/Details';
 import { AddListing } from './pages/AddListing';
+import { EditListing } from './pages/EditListing';
 import { MyListings } from './pages/MyListings';
 import { AllListings } from './pages/AllListings';
 import { Messages } from './pages/Messages';
+import { Favorites } from './pages/Favorites';
+import { SavedSearches } from './pages/SavedSearches';
 import { loginWithTelegram } from './api/auth';
 
 const App: React.FC = () => {
@@ -81,7 +84,10 @@ const App: React.FC = () => {
           <Route path="messages" element={<Messages />} />
           <Route path="listing/:id" element={<Details />} />
           <Route path="add" element={<AddListing />} />
+          <Route path="edit/:id" element={<EditListing />} />
           <Route path="my-listings" element={<MyListings />} />
+          <Route path="favorites" element={<Favorites />} />
+          <Route path="saved-searches" element={<SavedSearches />} />
         </Route>
       </Routes>
     </BrowserRouter>
@@ -89,4 +95,3 @@ const App: React.FC = () => {
 };
 
 export default App;
-

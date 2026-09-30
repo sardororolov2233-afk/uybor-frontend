@@ -19,6 +19,11 @@ export async function saveAIPreferences(prompt: string): Promise<any> {
   return data;
 }
 
+export async function getUserPreferences(): Promise<any[]> {
+  const { data } = await api.get('/ai/preferences');
+  return data;
+}
+
 export async function verifyReceiptPayment(
   receiptImageUrl: string,
   listingId?: string,

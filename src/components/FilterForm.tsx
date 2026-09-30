@@ -1,24 +1,33 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, SlidersHorizontal, Building2, User, Home as HomeIcon } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
 import { SelectSheet } from './SelectSheet';
 
+export interface FilterState {
+  query: string;
+  category: 'sale' | 'rent' | 'daily';
+  rentFilter: string | null;
+  isOwner: boolean;
+  isMortgage: boolean;
+  propertyType: string;
+}
+
 interface FilterFormProps {
-  onSearch: (query: string) => void;
+  onFiltersChange: (filters: FilterState) => void;
   onOpenFilter: () => void;
 }
 
-export const FilterForm: React.FC<FilterFormProps> = ({ onSearch, onOpenFilter }) => {
-  const [query, setQuery] = useState('');
-  const [activeTab, setActiveTab] = useState<'sale' | 'rent' | 'daily'>('sale');
-  
-  // Quick Filters state
-  const [rentFilter, setRentFilter] = useState<string | null>(null);
-  const [isOwner, setIsOwner] = useState(false);
-  const [isMortgage, setIsMortgage] = useState(false);
-  const [propertyType, setPropertyType] = useState<string>('all');
-  const [isTypeSheetOpen, setIsTypeSheetOpen] = useState(false);
+export const FilterForm: React.FC<FilterFormProps> = ({ onFiltersChange, onOpenFilter }) => {
+  const [filters, setFilters] = useState<FilterState>({
+    query: '',
+    category: 'sale',
+    rentFilter: null,
+    isOwner: false,
+    isMortgage: false,
+    propertyType: 'all',
+  });
 
+  const [isTypeSheetOpen, setIsTypeSheetOpen] = useState(false);
   const { t } = useTranslation();
 
   const propertyTypes = [
@@ -29,13 +38,21 @@ export const FilterForm: React.FC<FilterFormProps> = ({ onSearch, onOpenFilter }
     { value: 'land', label: t('filter.propLand') || 'Yer' }
   ];
 
+  useEffect(() => {
+    onFiltersChange(filters);
+  }, [filters]);
+
+  const updateFilter = (key: keyof FilterState, value: any) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
+  };
+
   const toggleRentFilter = (val: string) => {
-    setRentFilter(prev => prev === val ? null : val);
+    updateFilter('rentFilter', filters.rentFilter === val ? null : val);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSearch(query);
+    onFiltersChange(filters);
   };
 
   return (
@@ -50,8 +67,8 @@ export const FilterForm: React.FC<FilterFormProps> = ({ onSearch, onOpenFilter }
             type="text"
             className="block w-full pl-10 pr-3 py-2.5 bg-gray-50 border-transparent rounded-xl text-sm placeholder-gray-400 focus:border-blue-500 focus:bg-white focus:ring-0 transition-colors"
             placeholder={t('search.placeholder')}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            value={filters.query}
+            onChange={(e) => updateFilter('query', e.target.value)}
           />
         </div>
         <button 
@@ -66,20 +83,20 @@ export const FilterForm: React.FC<FilterFormProps> = ({ onSearch, onOpenFilter }
       {/* Main Filter Tabs */}
       <div className="flex bg-gray-100 rounded-xl p-1">
         <button 
-          onClick={() => setActiveTab('sale')}
-          className={`flex-1 py-1.5 text-sm font-semibold rounded-lg transition-colors ${activeTab === 'sale' ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
+          onClick={() => updateFilter('category', 'sale')}
+          className={`flex-1 py-1.5 text-sm font-semibold rounded-lg transition-colors ${filters.category === 'sale' ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
         >
           {t('filter.sale')}
         </button>
         <button 
-          onClick={() => setActiveTab('rent')}
-          className={`flex-1 py-1.5 text-sm font-semibold rounded-lg transition-colors ${activeTab === 'rent' ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
+          onClick={() => updateFilter('category', 'rent')}
+          className={`flex-1 py-1.5 text-sm font-semibold rounded-lg transition-colors ${filters.category === 'rent' ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
         >
           {t('filter.rent')}
         </button>
         <button 
-          onClick={() => setActiveTab('daily')}
-          className={`flex-1 py-1.5 text-sm font-semibold rounded-lg transition-colors ${activeTab === 'daily' ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
+          onClick={() => updateFilter('category', 'daily')}
+          className={`flex-1 py-1.5 text-sm font-semibold rounded-lg transition-colors ${filters.category === 'daily' ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
         >
           {t('filter.daily')}
         </button>
@@ -87,23 +104,23 @@ export const FilterForm: React.FC<FilterFormProps> = ({ onSearch, onOpenFilter }
 
       {/* Horizontal Chips */}
       <div className="flex overflow-x-auto hide-scrollbar gap-2 pb-1">
-        {activeTab === 'rent' ? (
+        {filters.category === 'rent' ? (
           <>
             <button 
               onClick={() => toggleRentFilter('family')}
-              className={`flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${rentFilter === 'family' ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-700 active:bg-gray-200'}`}
+              className={`flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${filters.rentFilter === 'family' ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-700 active:bg-gray-200'}`}
             >
               {t('filter.family')}
             </button>
             <button 
               onClick={() => toggleRentFilter('girls')}
-              className={`flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${rentFilter === 'girls' ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-700 active:bg-gray-200'}`}
+              className={`flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${filters.rentFilter === 'girls' ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-700 active:bg-gray-200'}`}
             >
               {t('filter.studentGirls')}
             </button>
             <button 
               onClick={() => toggleRentFilter('boys')}
-              className={`flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${rentFilter === 'boys' ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-700 active:bg-gray-200'}`}
+              className={`flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${filters.rentFilter === 'boys' ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-700 active:bg-gray-200'}`}
             >
               {t('filter.studentBoys')}
             </button>
@@ -112,22 +129,22 @@ export const FilterForm: React.FC<FilterFormProps> = ({ onSearch, onOpenFilter }
           <>
             <button 
               onClick={() => setIsTypeSheetOpen(true)}
-              className={`flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${propertyType !== 'all' ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-700 active:bg-gray-200'}`}
+              className={`flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${filters.propertyType !== 'all' ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-700 active:bg-gray-200'}`}
             >
               <Building2 size={14} />
-              {propertyType !== 'all' ? propertyTypes.find(p => p.value === propertyType)?.label : t('filter.type')}
+              {filters.propertyType !== 'all' ? propertyTypes.find(p => p.value === filters.propertyType)?.label : t('filter.type')}
               <span className="ml-1 text-[10px]">▼</span>
             </button>
             <button 
-              onClick={() => setIsOwner(!isOwner)}
-              className={`flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${isOwner ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-700 active:bg-gray-200'}`}
+              onClick={() => updateFilter('isOwner', !filters.isOwner)}
+              className={`flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${filters.isOwner ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-700 active:bg-gray-200'}`}
             >
               <User size={14} />
               {t('filter.owner')}
             </button>
             <button 
-              onClick={() => setIsMortgage(!isMortgage)}
-              className={`flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${isMortgage ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-700 active:bg-gray-200'}`}
+              onClick={() => updateFilter('isMortgage', !filters.isMortgage)}
+              className={`flex items-center gap-1.5 whitespace-nowrap px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${filters.isMortgage ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'bg-gray-100 text-gray-700 active:bg-gray-200'}`}
             >
               <HomeIcon size={14} />
               {t('filter.mortgage')}
@@ -141,8 +158,8 @@ export const FilterForm: React.FC<FilterFormProps> = ({ onSearch, onOpenFilter }
         onClose={() => setIsTypeSheetOpen(false)}
         title={t('filter.type')}
         options={propertyTypes}
-        selectedValue={propertyType}
-        onSelect={setPropertyType}
+        selectedValue={filters.propertyType}
+        onSelect={(val) => updateFilter('propertyType', val)}
       />
     </div>
   );
