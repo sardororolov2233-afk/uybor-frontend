@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { CompactListingCard } from '../components/CompactListingCard';
 import type { Listing } from '../types';
-import { useTranslation } from '../i18n/LanguageContext';
 import { ChevronLeft, Heart } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { fetchFavorites } from '../api/favorites';
@@ -9,7 +8,6 @@ import { fetchFavorites } from '../api/favorites';
 export const Favorites: React.FC = () => {
   const [listings, setListings] = useState<Listing[]>([]);
   const [loading, setLoading] = useState(true);
-  const { t } = useTranslation();
   const navigate = useNavigate();
 
   useEffect(() => {

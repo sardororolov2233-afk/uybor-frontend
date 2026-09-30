@@ -4,7 +4,7 @@ import WebApp from '@twa-dev/sdk';
 import type { Listing } from '../types';
 import { useTranslation } from '../i18n/LanguageContext';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
-import { LogOut, Edit3, Trash2, Zap, Image as ImageIcon, CheckCircle, Copy, Check } from 'lucide-react';
+import { LogOut, Edit3, Trash2, Zap, Image as ImageIcon, CheckCircle, Copy, Check, X } from 'lucide-react';
 import { ListingCard } from '../components/ListingCard';
 import { fetchMyListings, deleteListingApi } from '../api/listings';
 import { getUser, logout } from '../api/auth';

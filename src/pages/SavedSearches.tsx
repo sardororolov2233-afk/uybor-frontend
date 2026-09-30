@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import { useTranslation } from '../i18n/LanguageContext';
 import { ChevronLeft, Bell, Search, MapPin } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getUserPreferences } from '../api/ai';
@@ -7,7 +6,6 @@ import { getUserPreferences } from '../api/ai';
 export const SavedSearches: React.FC = () => {
   const [preferences, setPreferences] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const { t } = useTranslation();
   const navigate = useNavigate();
 
   useEffect(() => {

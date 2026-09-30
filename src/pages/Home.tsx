@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { FilterForm, FilterState } from '../components/FilterForm';
+import { FilterForm } from '../components/FilterForm';
+import type { FilterState } from '../components/FilterForm';
 import { CompactListingCard } from '../components/CompactListingCard';
 import { OverlayListingCard } from '../components/OverlayListingCard';
 import { SelectSheet } from '../components/SelectSheet';
