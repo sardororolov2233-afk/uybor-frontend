@@ -30,7 +30,7 @@ export const AddListing: React.FC = () => {
     phone: '+998',
   });
 
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [activeSelect, setActiveSelect] = useState<'region' | 'district' | 'country' | null>(null);
@@ -73,51 +73,13 @@ export const AddListing: React.FC = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const compressImage = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target?.result as string;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          let width = img.width;
-          let height = img.height;
-          const MAX_SIZE = 1024;
-          
-          if (width > height && width > MAX_SIZE) {
-            height *= MAX_SIZE / width;
-            width = MAX_SIZE;
-          } else if (height > MAX_SIZE) {
-            width *= MAX_SIZE / height;
-            height = MAX_SIZE;
-          }
-          
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          if (ctx) {
-            ctx.drawImage(img, 0, 0, width, height);
-            resolve(canvas.toDataURL('image/jpeg', 0.7));
-          } else {
-            resolve(event.target?.result as string); // fallback
-          }
-        };
-        img.onerror = (error) => reject(error);
-      };
-      reader.onerror = (error) => reject(error);
-    });
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
       const remainingSlots = 5 - images.length;
       const filesToProcess = filesArray.slice(0, remainingSlots);
       
-      const newBase64Images = await Promise.all(filesToProcess.map(file => compressImage(file)));
-      setImages(prev => [...prev, ...newBase64Images]);
+      setImages(prev => [...prev, ...filesToProcess]);
     }
   };
 
@@ -140,18 +102,22 @@ export const AddListing: React.FC = () => {
         land: 'LAND',
       };
 
-      await createListing({
-        title: formData.title,
-        description: formData.description,
-        price: parseFloat(formData.price),
-        currency: formData.currency === "so'm" ? 'UZS' : 'USD',
-        category,
-        property_type: propTypeMap[propertyType] || 'APARTMENT',
-        rooms: parseInt(formData.rooms) || 1,
-        area: parseFloat(formData.area) || null,
-        address: [formData.country, formData.region, formData.district, formData.streetAddress].filter(Boolean).join(', '),
-        images: images,
+      const formDataToSend = new FormData();
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('description', formData.description);
+      formDataToSend.append('price', formData.price);
+      formDataToSend.append('currency', formData.currency === "so'm" ? 'UZS' : 'USD');
+      formDataToSend.append('category', category);
+      formDataToSend.append('property_type', propTypeMap[propertyType] || 'APARTMENT');
+      formDataToSend.append('rooms', String(parseInt(formData.rooms) || 1));
+      if (formData.area) formDataToSend.append('area', formData.area);
+      formDataToSend.append('address', [formData.country, formData.region, formData.district, formData.streetAddress].filter(Boolean).join(', '));
+      
+      images.forEach(image => {
+        formDataToSend.append('images', image);
       });
+
+      await createListing(formDataToSend);
 
       if (WebApp && WebApp.showAlert) {
         WebApp.showAlert(t('add.success'));
@@ -282,9 +248,9 @@ export const AddListing: React.FC = () => {
               </button>
             )}
             
-            {images.map((src, idx) => (
+            {images.map((file, idx) => (
               <div key={idx} className="shrink-0 w-[100px] h-[100px] relative rounded-2xl border border-gray-200 overflow-hidden">
-                <img src={src} alt="Uploaded" className="w-full h-full object-cover" />
+                <img src={URL.createObjectURL(file)} alt="Uploaded" className="w-full h-full object-cover" />
                 <button 
                   type="button"
                   onClick={() => removeImage(idx)}

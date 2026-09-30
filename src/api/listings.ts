@@ -18,13 +18,19 @@ export async function fetchListingById(id: string): Promise<Listing> {
   return data;
 }
 
-export async function createListing(listing: Partial<Listing>): Promise<Listing> {
-  const { data } = await api.post('/listings', listing);
+export async function createListing(listing: FormData | Partial<Listing>): Promise<Listing> {
+  const isFormData = listing instanceof FormData;
+  const { data } = await api.post('/listings', listing, {
+    headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : undefined
+  });
   return data;
 }
 
-export async function updateListingApi(id: string, listing: Partial<Listing>): Promise<Listing> {
-  const { data } = await api.put(`/listings/${id}`, listing);
+export async function updateListingApi(id: string, listing: FormData | Partial<Listing>): Promise<Listing> {
+  const isFormData = listing instanceof FormData;
+  const { data } = await api.put(`/listings/${id}`, listing, {
+    headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : undefined
+  });
   return data;
 }
 

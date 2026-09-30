@@ -30,7 +30,7 @@ export const EditListing: React.FC = () => {
     phone: '+998',
   });
 
-  const [images, setImages] = useState<string[]>([]);
+  const [images, setImages] = useState<(File | string)[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [activeSelect, setActiveSelect] = useState<'region' | 'district' | 'country' | null>(null);
@@ -104,23 +104,13 @@ export const EditListing: React.FC = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = error => reject(error);
-      reader.readAsDataURL(file);
-    });
-  };
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
       const remainingSlots = 5 - images.length;
       const filesToProcess = filesArray.slice(0, remainingSlots);
       
-      const newBase64Images = await Promise.all(filesToProcess.map(file => fileToBase64(file)));
-      setImages(prev => [...prev, ...newBase64Images]);
+      setImages(prev => [...prev, ...filesToProcess]);
     }
   };
 
@@ -144,18 +134,26 @@ export const EditListing: React.FC = () => {
       };
 
       if (id) {
-        await updateListingApi(id, {
-          title: formData.title,
-          description: formData.description,
-          price: parseFloat(formData.price),
-          currency: formData.currency === "so'm" ? 'UZS' : 'USD',
-          category,
-          property_type: propTypeMap[propertyType] || 'APARTMENT',
-          rooms: parseInt(formData.floors) || 1,
-          area: parseFloat(formData.area) || null,
-          address: [formData.country, formData.region, formData.district].filter(Boolean).join(', '),
-          images: images,
+        const formDataToSend = new FormData();
+        formDataToSend.append('title', formData.title);
+        formDataToSend.append('description', formData.description);
+        formDataToSend.append('price', formData.price);
+        formDataToSend.append('currency', formData.currency === "so'm" ? 'UZS' : 'USD');
+        formDataToSend.append('category', category);
+        formDataToSend.append('property_type', propTypeMap[propertyType] || 'APARTMENT');
+        formDataToSend.append('rooms', String(parseInt(formData.floors) || 1));
+        if (formData.area) formDataToSend.append('area', formData.area);
+        formDataToSend.append('address', [formData.country, formData.region, formData.district].filter(Boolean).join(', '));
+        
+        images.forEach(image => {
+          if (typeof image === 'string') {
+            formDataToSend.append('existingImages', image);
+          } else {
+            formDataToSend.append('images', image);
+          }
         });
+
+        await updateListingApi(id, formDataToSend);
       }
 
       if (WebApp && WebApp.showAlert) {
@@ -295,9 +293,9 @@ export const EditListing: React.FC = () => {
               </button>
             )}
             
-            {images.map((src, idx) => (
+            {images.map((img, idx) => (
               <div key={idx} className="shrink-0 w-[100px] h-[100px] relative rounded-2xl border border-gray-200 overflow-hidden">
-                <img src={src} alt="Uploaded" className="w-full h-full object-cover" />
+                <img src={typeof img === 'string' ? img : URL.createObjectURL(img)} alt="Uploaded" className="w-full h-full object-cover" />
                 <button 
                   type="button"
                   onClick={() => removeImage(idx)}
