@@ -4,14 +4,15 @@ import { useNavigate } from 'react-router-dom';
 import WebApp from '@twa-dev/sdk';
 import { useTranslation } from '../i18n/LanguageContext';
 import { SelectSheet } from '../components/SelectSheet';
+import { createListing } from '../api/listings';
 
 export const AddListing: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   
   const [step, setStep] = useState(1);
-  const [, setGoal] = useState('');
-  const [, setPropertyType] = useState('');
+  const [goal, setGoal] = useState('');
+  const [propertyType, setPropertyType] = useState('');
   
   const [formData, setFormData] = useState({
     title: '',
@@ -67,14 +68,44 @@ export const AddListing: React.FC = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (WebApp && WebApp.showAlert) {
-      WebApp.showAlert(t('add.success'));
-    } else {
-      alert(t('add.success'));
+    try {
+      const category = ['sell', 'rent_out', 'daily_rent'].includes(goal) ? 'SALE' : 'RENT';
+      const propTypeMap: Record<string, string> = {
+        apartment: 'APARTMENT',
+        house: 'HOUSE',
+        commercial: 'COMMERCIAL',
+        land: 'LAND',
+      };
+
+      await createListing({
+        title: formData.title,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        currency: formData.currency === "so'm" ? 'UZS' : 'USD',
+        category,
+        property_type: propTypeMap[propertyType] || 'APARTMENT',
+        rooms: parseInt(formData.floors) || 1,
+        area: parseFloat(formData.area) || null,
+        address: [formData.region, formData.district].filter(Boolean).join(', '),
+        images: [],
+      });
+
+      if (WebApp && WebApp.showAlert) {
+        WebApp.showAlert(t('add.success'));
+      } else {
+        alert(t('add.success'));
+      }
+      navigate('/my-listings');
+    } catch (error) {
+      console.error('Error creating listing:', error);
+      if (WebApp && WebApp.showAlert) {
+        WebApp.showAlert(t('add.error'));
+      } else {
+        alert(t('add.error'));
+      }
     }
-    navigate('/my-listings');
   };
 
   const renderHeader = () => (

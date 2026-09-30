@@ -26,9 +26,9 @@ export const OverlayListingCard: React.FC<OverlayListingCardProps> = ({ listing,
         <div className="absolute top-2 left-2 right-2 flex justify-between items-start">
           <div className="flex items-center gap-1.5 bg-black/40 backdrop-blur-md rounded-full pl-1 pr-2 py-1">
             <div className="w-5 h-5 rounded-full overflow-hidden bg-white">
-              <img src={`https://ui-avatars.com/api/?name=${listing.userId}&background=random&color=fff`} className="w-full h-full object-cover" alt="user" />
+              <img src={`https://ui-avatars.com/api/?name=${listing.users?.first_name || listing.user_id || 'User'}&background=random&color=fff`} className="w-full h-full object-cover" alt="user" />
             </div>
-            <span className="text-[10px] text-white font-medium truncate max-w-[60px]">Sotuvchi</span>
+            <span className="text-[10px] text-white font-medium truncate max-w-[60px]">{listing.users?.first_name || 'Sotuvchi'}</span>
           </div>
 
           {badge && (
@@ -44,7 +44,7 @@ export const OverlayListingCard: React.FC<OverlayListingCardProps> = ({ listing,
             {listing.price.toLocaleString()} y.e
           </div>
           <div className="text-[11px] font-medium opacity-90 line-clamp-2">
-            {listing.title} • {listing.bedrooms}-kom | {listing.location}
+            {listing.title} • {listing.rooms}-kom | {listing.address}
           </div>
         </div>
       </div>

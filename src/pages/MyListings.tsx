@@ -5,23 +5,8 @@ import { useTranslation } from '../i18n/LanguageContext';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { LogOut, Edit3, Trash2, Zap, Image as ImageIcon, CheckCircle, Copy, Check } from 'lucide-react';
 import { ListingCard } from '../components/ListingCard';
-
-// Mock user's own listings
-const mockMyListings: Listing[] = [
-  {
-    id: 'my1',
-    title: 'Chilonzorda 3 xonali kvartira',
-    description: 'Ajoyib holatda, yangi ta\'mirlangan kvartira sotiladi.',
-    price: 65000,
-    currency: '$',
-    location: 'Toshkent, Chilonzor',
-    images: ['https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80'],
-    bedrooms: 3,
-    bathrooms: 1,
-    userId: '1060024205',
-    createdAt: new Date().toISOString()
-  }
-];
+import { fetchMyListings, deleteListingApi } from '../api/listings';
+import { getUser, logout } from '../api/auth';
 
 export const MyListings: React.FC = () => {
   const [listings, setListings] = useState<Listing[]>([]);
@@ -37,19 +22,35 @@ export const MyListings: React.FC = () => {
 
   const { t } = useTranslation();
   
-  const user = WebApp?.initDataUnsafe?.user;
-  const firstName = user?.first_name || 'Sardorbek';
-  const lastName = user?.last_name || "O'ralov";
+  const tgUser = WebApp?.initDataUnsafe?.user;
+  const storedUser = getUser();
+  const firstName = storedUser?.first_name || tgUser?.first_name || 'Foydalanuvchi';
+  const lastName = storedUser?.last_name || tgUser?.last_name || '';
   const fullName = `${firstName} ${lastName}`.trim();
-  const photoUrl = user?.photo_url || 'https://ui-avatars.com/api/?name=' + firstName + '&background=0066b2&color=fff';
+  const photoUrl = tgUser?.photo_url || 'https://ui-avatars.com/api/?name=' + firstName + '&background=0066b2&color=fff';
 
   useEffect(() => {
-    // Mock fetch
-    setTimeout(() => {
-      setListings(mockMyListings);
-      setLoading(false);
-    }, 500);
+    const load = async () => {
+      try {
+        const data = await fetchMyListings();
+        setListings(data);
+      } catch (error) {
+        console.error('Error loading my listings:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
   }, []);
+
+  const handleDelete = async (listingId: string) => {
+    try {
+      await deleteListingApi(listingId);
+      setListings(prev => prev.filter(l => l.id !== listingId));
+    } catch (error) {
+      console.error('Error deleting listing:', error);
+    }
+  };
 
   const handleCopyCard = () => {
     navigator.clipboard.writeText('9860020144204623').then(() => {
@@ -88,7 +89,10 @@ export const MyListings: React.FC = () => {
               <p className="text-sm text-gray-500">{balance.toLocaleString()} so'm</p>
             </div>
           </div>
-          <button className="p-2 bg-red-50 text-red-500 rounded-full active:scale-95 transition-transform">
+          <button 
+            onClick={() => { logout(); window.location.reload(); }}
+            className="p-2 bg-red-50 text-red-500 rounded-full active:scale-95 transition-transform"
+          >
             <LogOut size={20} />
           </button>
         </div>
@@ -138,7 +142,10 @@ export const MyListings: React.FC = () => {
                         <Edit3 size={16} />
                         Tahrirlash
                       </button>
-                      <button className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-red-50 text-red-500 rounded-xl font-semibold text-sm active:scale-95 transition-transform">
+                      <button 
+                        onClick={() => handleDelete(listing.id)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-red-50 text-red-500 rounded-xl font-semibold text-sm active:scale-95 transition-transform"
+                      >
                         <Trash2 size={16} />
                         O'chirish
                       </button>

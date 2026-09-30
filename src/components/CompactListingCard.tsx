@@ -26,7 +26,7 @@ export const CompactListingCard: React.FC<CompactListingCardProps> = ({ listing 
             </div>
           )}
           <div className="absolute bottom-2 left-2 bg-black/60 backdrop-blur-sm px-2 py-1 rounded-lg font-bold text-white text-xs">
-            ${listing.price.toLocaleString()}
+            {listing.price.toLocaleString()} {listing.currency || 'y.e'}
           </div>
         </div>
         
@@ -35,7 +35,7 @@ export const CompactListingCard: React.FC<CompactListingCardProps> = ({ listing 
           
           <div className="flex items-center text-gray-500 text-xs mt-auto pt-1">
             <MapPin size={12} className="mr-1 shrink-0 text-gray-400" />
-            <span className="truncate">{listing.location}</span>
+            <span className="truncate">{listing.address}</span>
           </div>
         </div>
       </div>

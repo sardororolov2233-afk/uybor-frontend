@@ -2,16 +2,24 @@ import React from 'react';
 import WebApp from '@twa-dev/sdk';
 import { Moon, ChevronDown } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
+import { getUser } from '../api/auth';
 
 export const Header: React.FC = () => {
   const { language, setLanguage } = useTranslation();
-  const user = WebApp?.initDataUnsafe?.user;
-
-  // Placeholder values if outside Telegram
-  const firstName = user?.first_name || 'Mehmon';
-  const photoUrl = user?.photo_url || 'https://ui-avatars.com/api/?name=' + firstName + '&background=0D8ABC&color=fff';
   
-  const displayName = firstName.length > 10 ? firstName.substring(0, 8) + '...' : firstName;
+  // 1) Server-authenticated user from localStorage (primary source)
+  const savedUser = getUser();
+  // 2) Telegram WebApp user (secondary fallback)
+  const tgUser = WebApp?.initDataUnsafe?.user;
+
+  // Build full name: prefer saved DB user, then Telegram, then "Mehmon"
+  const firstName = savedUser?.first_name || tgUser?.first_name || '';
+  const lastName = savedUser?.last_name || tgUser?.last_name || '';
+  const fullName = [firstName, lastName].filter(Boolean).join(' ') || 'Mehmon';
+
+  const photoUrl = savedUser?.photo_url || tgUser?.photo_url || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(fullName) + '&background=0D8ABC&color=fff';
+  
+  const displayName = fullName.length > 10 ? fullName.substring(0, 8) + '...' : fullName;
 
   return (
     <div className="flex items-center justify-between px-4 py-3 bg-white border-b border-gray-100">

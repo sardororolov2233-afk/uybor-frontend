@@ -1,20 +1,31 @@
 import axios from 'axios';
-import WebApp from '@twa-dev/sdk';
+import { getToken } from './auth';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3000/api',
+  baseURL: API_BASE_URL,
 });
 
-// Interceptor to add Telegram InitData for authentication (if needed by backend)
+// JWT token ni har bir so'rovga qo'shish
 api.interceptors.request.use((config) => {
-  try {
-    if (WebApp && WebApp.initData) {
-      config.headers.Authorization = `tma ${WebApp.initData}`;
-    }
-  } catch (e) {
-    console.error("Auth interceptor error:", e);
+  const token = getToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
+
+// 401 xatolikda token ni tozalash
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('uybor_jwt_token');
+      localStorage.removeItem('uybor_user');
+    }
+    return Promise.reject(error);
+  }
+);
 
 export default api;

@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ChevronLeft, MapPin, Heart, X, Copy, Check, MessageCircle, Send, Building } from 'lucide-react';
+import { ChevronLeft, MapPin, Heart, X, Copy, Check, MessageCircle, Send } from 'lucide-react';
 import type { Listing } from '../types';
 import WebApp from '@twa-dev/sdk';
+import { fetchListingById } from '../api/listings';
 
 // Simple Telegram Icon component since lucide doesn't have a perfect match
 const TelegramIcon = ({ className }: { className?: string }) => (
@@ -18,6 +19,7 @@ export const Details: React.FC = () => {
   const [listing, setListing] = useState<Listing | null>(null);
   const [phoneModalOpen, setPhoneModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     try {
@@ -37,39 +39,25 @@ export const Details: React.FC = () => {
   }, [navigate]);
 
   useEffect(() => {
-    // Mock fetch matching the design
-    const fetchListing = async () => {
-      setListing({
-        id: id || '1',
-        title: '139,900y.e. ga medgaradokda uyimz sotiladi!',
-        description: '139,900y.e. ga 81 kvadratli podklyuch yevro remontili uyimz 139,900y.e. ga sotiladi! Srochna variant!',
-        price: 139900,
-        currency: 'y.e',
-        location: 'Toshkent shahri, Olmazor tumani',
-        images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80'],
-        bedrooms: 3,
-        bathrooms: 1,
-        userId: 'user123',
-        createdAt: new Date().toISOString(),
-        phone: '+998 90 123 45 67',
-        telegram: 'sardororolov2233_afk',
-        goal: 'SOTAMAN',
-        propertyType: 'KVARTIRA',
-        mortgage: true,
-        postedBy: 'Rieltor',
-        buildingType: 'Yangi bino',
-        floor: 4,
-        maxFloors: 6,
-        area: 81,
-        renovation: 'Kapital'
-      });
+    const loadListing = async () => {
+      if (!id) return;
+      try {
+        const data = await fetchListingById(id);
+        setListing(data);
+      } catch (err) {
+        console.error('Error loading listing:', err);
+        setError(true);
+      }
     };
-    fetchListing();
+    loadListing();
   }, [id]);
 
+  const phone = listing?.users?.phone_number || '';
+  const username = listing?.users?.username || '';
+
   const handleTelegram = () => {
-    if (!listing?.telegram) return;
-    const url = `https://t.me/${listing.telegram}`;
+    if (!username) return;
+    const url = `https://t.me/${username}`;
     if (WebApp && WebApp.openTelegramLink) {
       WebApp.openTelegramLink(url);
     } else {
@@ -78,13 +66,20 @@ export const Details: React.FC = () => {
   };
 
   const copyPhone = () => {
-    if (listing?.phone) {
-      navigator.clipboard.writeText(listing.phone).then(() => {
+    if (phone) {
+      navigator.clipboard.writeText(phone).then(() => {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       });
     }
   };
+
+  if (error) return (
+    <div className="flex h-screen items-center justify-center flex-col gap-3">
+      <p className="text-gray-500 font-medium">E'lon topilmadi</p>
+      <button onClick={() => navigate(-1)} className="text-blue-600 font-semibold">Orqaga</button>
+    </div>
+  );
 
   if (!listing) return (
     <div className="flex h-screen items-center justify-center">
@@ -119,20 +114,14 @@ export const Details: React.FC = () => {
         {/* Tags and Actions Row */}
         <div className="flex justify-between items-start mb-3">
           <div className="flex flex-wrap gap-2">
-            {listing.goal && (
+            {listing.category && (
               <div className="px-3 py-1 bg-gray-100 rounded-full text-xs font-bold text-gray-900">
-                {listing.goal}
+                {listing.category}
               </div>
             )}
-            {listing.propertyType && (
+            {listing.property_type && (
               <div className="px-3 py-1 bg-gray-100 rounded-full text-xs font-bold text-gray-900">
-                {listing.propertyType}
-              </div>
-            )}
-            {listing.mortgage && (
-              <div className="px-3 py-1 bg-gray-100 rounded-full text-xs font-bold text-gray-900 flex items-center gap-1 mt-1 w-full sm:w-auto">
-                <Building size={12} />
-                IPOTEKAGA MUMKIN
+                {listing.property_type}
               </div>
             )}
           </div>
@@ -145,7 +134,9 @@ export const Details: React.FC = () => {
         </div>
 
         {/* Time */}
-        <p className="text-gray-500 text-sm mb-3">7 soat oldin</p>
+        <p className="text-gray-500 text-sm mb-3">
+          {new Date(listing.created_at).toLocaleDateString('uz-UZ')}
+        </p>
 
         {/* Title & Price */}
         <h1 className="text-[22px] font-bold text-gray-900 leading-tight mb-2">
@@ -162,39 +153,25 @@ export const Details: React.FC = () => {
 
         {/* Details Table */}
         <div className="space-y-3 mb-8">
-          {listing.postedBy && (
+          {listing.users?.first_name && (
             <div className="flex items-center text-[15px]">
               <span className="font-semibold text-gray-900 shrink-0">Kim joylashtirdi</span>
               <div className="flex-1 border-b-2 border-gray-100 mx-3 mb-1"></div>
-              <span className="font-bold text-gray-900 shrink-0 text-right">{listing.postedBy}</span>
+              <span className="font-bold text-gray-900 shrink-0 text-right">{listing.users.first_name}</span>
             </div>
           )}
-          {listing.buildingType && (
+          {listing.property_type && (
             <div className="flex items-center text-[15px]">
-              <span className="font-semibold text-gray-900 shrink-0">Kvartira turi</span>
+              <span className="font-semibold text-gray-900 shrink-0">Turi</span>
               <div className="flex-1 border-b-2 border-gray-100 mx-3 mb-1"></div>
-              <span className="font-bold text-gray-900 shrink-0 text-right">{listing.buildingType}</span>
+              <span className="font-bold text-gray-900 shrink-0 text-right">{listing.property_type}</span>
             </div>
           )}
-          {listing.bedrooms && (
+          {listing.rooms > 0 && (
             <div className="flex items-center text-[15px]">
               <span className="font-semibold text-gray-900 shrink-0">Xonalar soni</span>
               <div className="flex-1 border-b-2 border-gray-100 mx-3 mb-1"></div>
-              <span className="font-bold text-gray-900 shrink-0 text-right">{listing.bedrooms}</span>
-            </div>
-          )}
-          {listing.floor && (
-            <div className="flex items-center text-[15px]">
-              <span className="font-semibold text-gray-900 shrink-0">Qavat</span>
-              <div className="flex-1 border-b-2 border-gray-100 mx-3 mb-1"></div>
-              <span className="font-bold text-gray-900 shrink-0 text-right">{listing.floor}</span>
-            </div>
-          )}
-          {listing.maxFloors && (
-            <div className="flex items-center text-[15px]">
-              <span className="font-semibold text-gray-900 shrink-0">Uyning qavatlari soni</span>
-              <div className="flex-1 border-b-2 border-gray-100 mx-3 mb-1"></div>
-              <span className="font-bold text-gray-900 shrink-0 text-right">{listing.maxFloors}</span>
+              <span className="font-bold text-gray-900 shrink-0 text-right">{listing.rooms}</span>
             </div>
           )}
           {listing.area && (
@@ -202,13 +179,6 @@ export const Details: React.FC = () => {
               <span className="font-semibold text-gray-900 shrink-0">Maydon, m²</span>
               <div className="flex-1 border-b-2 border-gray-100 mx-3 mb-1"></div>
               <span className="font-bold text-gray-900 shrink-0 text-right">{listing.area}</span>
-            </div>
-          )}
-          {listing.renovation && (
-            <div className="flex items-center text-[15px]">
-              <span className="font-semibold text-gray-900 shrink-0">Ta'mir</span>
-              <div className="flex-1 border-b-2 border-gray-100 mx-3 mb-1"></div>
-              <span className="font-bold text-gray-900 shrink-0 text-right">{listing.renovation}</span>
             </div>
           )}
         </div>
@@ -223,7 +193,7 @@ export const Details: React.FC = () => {
         
         <div className="flex items-start text-gray-800 mb-6">
           <MapPin size={20} className="mr-2 shrink-0 mt-0.5" />
-          <span className="text-[15px]">{listing.location}</span>
+          <span className="text-[15px]">{listing.address}</span>
         </div>
       </div>
 
@@ -237,7 +207,7 @@ export const Details: React.FC = () => {
           Sotuvchiga yozing
         </button>
         <button 
-          onClick={() => setPhoneModalOpen(true)}
+          onClick={() => phone && setPhoneModalOpen(true)}
           className="w-full bg-black text-white font-bold py-3.5 rounded-xl active:scale-[0.98] transition-transform"
         >
           Qo'ng'iroq qiling
@@ -264,11 +234,12 @@ export const Details: React.FC = () => {
             </div>
             
             <div className="bg-gray-50 rounded-2xl p-4 flex flex-col items-center justify-center gap-3 mb-6">
-              <span className="text-2xl font-bold tracking-wider text-gray-900">{listing.phone}</span>
+              <span className="text-2xl font-bold tracking-wider text-gray-900">{phone || "Raqam ko'rsatilmagan"}</span>
             </div>
 
             <button 
               onClick={copyPhone}
+              disabled={!phone}
               className={`w-full py-4 rounded-xl font-bold flex items-center justify-center gap-2 active:scale-95 transition-all ${
                 copied 
                   ? 'bg-green-500 text-white shadow-lg shadow-green-200' 

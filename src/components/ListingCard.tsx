@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import type { Listing } from '../types';
-import { MapPin, BedDouble, Bath } from 'lucide-react';
+import { MapPin, BedDouble } from 'lucide-react';
 import { useTranslation } from '../i18n/LanguageContext';
 
 interface ListingCardProps {
@@ -26,7 +26,7 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing }) => {
             </div>
           )}
           <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-lg font-semibold text-primary">
-            ${listing.price.toLocaleString()}
+            {listing.price.toLocaleString()} {listing.currency || 'y.e'}
           </div>
         </div>
         
@@ -35,17 +35,13 @@ export const ListingCard: React.FC<ListingCardProps> = ({ listing }) => {
           
           <div className="flex items-center text-gray-500 text-sm mb-3">
             <MapPin size={14} className="mr-1 shrink-0" />
-            <span className="truncate">{listing.location}</span>
+            <span className="truncate">{listing.address}</span>
           </div>
           
           <div className="flex items-center gap-4 text-sm text-gray-600 border-t border-gray-50 pt-3">
             <div className="flex items-center">
               <BedDouble size={16} className="mr-1.5 text-gray-400" />
-              <span>{listing.bedrooms} {t('card.beds')}</span>
-            </div>
-            <div className="flex items-center">
-              <Bath size={16} className="mr-1.5 text-gray-400" />
-              <span>{listing.bathrooms} {t('card.baths')}</span>
+              <span>{listing.rooms} {t('card.beds')}</span>
             </div>
           </div>
         </div>

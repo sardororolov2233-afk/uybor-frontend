@@ -17,13 +17,19 @@ const mockListing: Listing = {
   title: 'Yunusobodda 2 xonali kvartira',
   description: 'Yangi ta\'mirlangan, barcha sharoitlarga ega kvartira ijaraga beriladi.',
   price: 400,
-  currency: '$',
-  location: 'Toshkent, Yunusobod',
+  currency: 'USD',
+  category: 'RENT',
+  property_type: 'APARTMENT',
+  address: 'Toshkent, Yunusobod',
   images: ['https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?w=800&q=80'],
-  bedrooms: 2,
-  bathrooms: 1,
-  userId: 'ai_bot',
-  createdAt: new Date().toISOString()
+  rooms: 2,
+  area: null,
+  lat: null,
+  lon: null,
+  status: 'ACTIVE',
+  user_id: 'ai_bot',
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
 };
 
 export const Messages: React.FC = () => {
