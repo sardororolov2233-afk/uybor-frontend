@@ -7,9 +7,10 @@ const USER_KEY = 'uybor_user';
 export async function loginWithTelegram(): Promise<{ token: string; user: any } | null> {
   try {
     let initData = '';
+    const tg = (window as any)?.Telegram?.WebApp || WebApp;
     try {
-      initData = WebApp?.initData || '';
-      console.log('[AUTH] WebApp.initData length:', initData.length);
+      initData = tg?.initData || '';
+      console.log('[AUTH] Telegram WebApp initData length:', initData.length);
     } catch (e) {
       console.warn('[AUTH] WebApp not available:', e);
     }
@@ -23,8 +24,12 @@ export async function loginWithTelegram(): Promise<{ token: string; user: any } 
     const { data } = await api.post('/auth/telegram', { initData });
     console.log('[AUTH] Backend response:', JSON.stringify(data?.user));
 
-    localStorage.setItem(TOKEN_KEY, data.token);
-    localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+    if (data?.token) {
+      localStorage.setItem(TOKEN_KEY, data.token);
+    }
+    if (data?.user) {
+      localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+    }
 
     return data;
   } catch (error: any) {
