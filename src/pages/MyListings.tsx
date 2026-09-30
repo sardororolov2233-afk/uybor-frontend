@@ -4,7 +4,7 @@ import WebApp from '@twa-dev/sdk';
 import type { Listing } from '../types';
 import { useTranslation } from '../i18n/LanguageContext';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
-import { LogOut, Edit3, Trash2, Zap, Image as ImageIcon, CheckCircle, Copy, Check, X } from 'lucide-react';
+import { LogOut, Edit3, Trash2, Zap, Image as ImageIcon, CheckCircle, Copy, Check, X, Hourglass } from 'lucide-react';
 import { ListingCard } from '../components/ListingCard';
 import { fetchMyListings, deleteListingApi } from '../api/listings';
 import { getUser, logout } from '../api/auth';
@@ -21,6 +21,7 @@ export const MyListings: React.FC = () => {
   const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'checking' | 'success' | 'error'>('idle');
   const [uploadError, setUploadError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
 
@@ -63,6 +64,36 @@ export const MyListings: React.FC = () => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
+  };
+
+  const handleCreateOrder = () => {
+    if (amount && parseInt(amount.replace(/\D/g, '')) >= 1000) {
+      setTimeLeft(15 * 60); // 15 daqiqa
+    }
+  };
+
+  const cancelOrder = () => {
+    setTimeLeft(null);
+    setUploadState('idle');
+  };
+
+  useEffect(() => {
+    if (timeLeft === null) return;
+    if (timeLeft <= 0) {
+      cancelOrder();
+      return;
+    }
+    const timer = setInterval(() => {
+      setTimeLeft(prev => (prev ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [timeLeft]);
+
+  const formatTime = (seconds: number | null) => {
+    if (seconds === null) return '00:00';
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
   const handleEdit = (id: string) => {
@@ -119,6 +150,7 @@ export const MyListings: React.FC = () => {
           setTimeout(() => {
             setUploadState('idle');
             setAmount('');
+            setTimeLeft(null);
           }, 3000);
         } else {
           setUploadState('error');
@@ -252,114 +284,175 @@ export const MyListings: React.FC = () => {
               </div>
             </div>
 
-            {/* Top Up Section */}
-            <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 mb-6">
-              <h3 className="font-bold text-gray-900 mb-3 ml-1 text-lg">Hisobni to'ldirish</h3>
-              
-              <input 
-                type="text" 
-                placeholder="Summani kiriting"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-4 mb-4 text-[15px] font-semibold outline-none focus:border-blue-500 focus:bg-white transition-all"
-              />
-              
-              <div className="grid grid-cols-4 gap-2 mb-2">
-                {['50 000', '100 000', '200 000', '500 000'].map(val => (
-                  <button 
-                    key={val}
-                    onClick={() => setAmount(val)}
-                    className="bg-gray-50 hover:bg-gray-100 py-3 rounded-xl text-sm font-bold text-gray-800 transition-colors border border-gray-100"
-                  >
-                    {val.split(' ')[0]}k
-                  </button>
-                ))}
-              </div>
-            </div>
+            {timeLeft === null ? (
+              <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 mb-6">
+                <h3 className="font-bold text-gray-900 mb-3 ml-1 text-lg">Hisobni to'ldirish</h3>
+                
+                <input 
+                  type="text" 
+                  placeholder="Summani kiriting"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-4 py-4 mb-4 text-[15px] font-semibold outline-none focus:border-blue-500 focus:bg-white transition-all"
+                />
+                
+                <div className="grid grid-cols-4 gap-2 mb-4">
+                  {['50 000', '100 000', '200 000', '500 000'].map(val => (
+                    <button 
+                      key={val}
+                      onClick={() => setAmount(val)}
+                      className="bg-gray-50 hover:bg-gray-100 py-3 rounded-xl text-sm font-bold text-gray-800 transition-colors border border-gray-100"
+                    >
+                      {val.split(' ')[0]}k
+                    </button>
+                  ))}
+                </div>
 
-            {/* Receiver Card Info */}
-            <div className="bg-white rounded-3xl p-5 shadow-sm border border-yellow-400 mb-6 relative overflow-hidden">
-              <div className="absolute top-0 left-0 w-1 h-full bg-yellow-400"></div>
-              <h4 className="text-gray-500 text-sm font-semibold mb-1">To'lov uchun karta raqami:</h4>
-              <div className="flex justify-between items-center mb-1">
-                <span className="text-2xl font-black text-gray-900 tracking-wider">9860 0201 4420 4623</span>
                 <button 
-                  onClick={handleCopyCard}
-                  className="p-2 bg-gray-100 rounded-full text-gray-700 active:scale-95"
+                  onClick={handleCreateOrder}
+                  disabled={!amount || parseInt(amount.replace(/\D/g, '')) < 1000}
+                  className={`w-full py-4 rounded-2xl font-bold text-lg transition-all ${
+                    !amount || parseInt(amount.replace(/\D/g, '')) < 1000 
+                      ? 'bg-gray-100 text-gray-400' 
+                      : 'bg-blue-600 text-white shadow-md active:scale-95'
+                  }`}
                 >
-                  {copied ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
+                  To'lov qilish
                 </button>
               </div>
-              <p className="text-gray-900 font-bold">O'ralov Sardorbek</p>
-            </div>
+            ) : (
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 mb-6">
+                  <div className="flex justify-between items-center mb-4 pb-4 border-b border-gray-50">
+                    <h3 className="font-bold text-gray-900 text-lg">To'lov jarayoni</h3>
+                    <div className="bg-red-50 text-red-600 font-mono font-bold px-3 py-1.5 rounded-lg text-lg flex items-center gap-1.5">
+                      <Hourglass size={18} className="animate-pulse" />
+                      {formatTime(timeLeft)}
+                    </div>
+                  </div>
 
-            {/* Receipt Upload */}
-            <div 
-              onClick={() => fileInputRef.current?.click()}
-              className={`bg-white border-2 border-dashed rounded-3xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all ${
-                uploadState === 'success' 
-                  ? 'border-green-500 bg-green-50' 
-                  : uploadState === 'checking'
-                  ? 'border-blue-400 bg-blue-50'
-                  : uploadState === 'error'
-                  ? 'border-red-400 bg-red-50'
-                  : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <input 
-                type="file" 
-                ref={fileInputRef} 
-                accept="image/*" 
-                className="hidden" 
-                onChange={handleFileChange}
-              />
-              
-              {uploadState === 'idle' && (
-                <>
-                  <div className="w-14 h-14 bg-gray-100 text-gray-500 rounded-full flex items-center justify-center mb-3">
-                    <ImageIcon size={28} />
+                  <div className="text-center mb-4">
+                    <p className="text-gray-500 text-sm">To'lanadigan summa</p>
+                    <p className="text-2xl font-black text-gray-900">{parseInt(amount.replace(/\D/g, '')).toLocaleString()} so'm</p>
                   </div>
-                  <p className="text-gray-900 font-bold text-center">Chek yuklash uchun bosing</p>
-                  <p className="text-gray-500 text-sm mt-1">To'lov qilinganligini tasdiqlash uchun</p>
-                </>
-              )}
-              
-              {uploadState === 'checking' && (
-                <>
-                  <div className="w-14 h-14 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center mb-3">
-                    <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-blue-600"></div>
-                  </div>
-                  <p className="text-blue-700 font-bold text-center">Chek AI tomonidan tekshirilmoqda...</p>
-                  <p className="text-blue-500 text-sm mt-1">Iltimos, kuting</p>
-                </>
-              )}
-              
-              {uploadState === 'success' && (
-                <>
-                  <div className="w-14 h-14 bg-green-100 text-green-500 rounded-full flex items-center justify-center mb-3">
-                    <CheckCircle size={28} />
-                  </div>
-                  <p className="text-green-700 font-bold text-center">Tasdiqlandi!</p>
-                  <p className="text-green-600 text-sm mt-1">Hisobingiz muvaffaqiyatli to'ldirildi</p>
-                </>
-              )}
 
-              {uploadState === 'error' && (
-                <>
-                  <div className="w-14 h-14 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-3">
-                    <X size={28} />
+                  {/* Receiver Card Info */}
+                  <div className="bg-gray-50 rounded-2xl p-5 border border-yellow-400 mb-5 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-1 h-full bg-yellow-400"></div>
+                    <h4 className="text-gray-500 text-sm font-semibold mb-1">Ushbu karta raqamiga o'tkazing:</h4>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-xl sm:text-2xl font-black text-gray-900 tracking-wider">9860 0201 4420 4623</span>
+                      <button 
+                        onClick={handleCopyCard}
+                        className="p-2 bg-white rounded-full text-gray-700 shadow-sm active:scale-95"
+                      >
+                        {copied ? <Check size={18} className="text-green-500" /> : <Copy size={18} />}
+                      </button>
+                    </div>
+                    <p className="text-gray-900 font-bold">O'ralov Sardorbek</p>
                   </div>
-                  <p className="text-red-700 font-bold text-center">Xatolik yuz berdi</p>
-                  <p className="text-red-600 text-sm mt-1 text-center">{uploadError}</p>
-                  <button 
-                    onClick={(e) => { e.stopPropagation(); setUploadState('idle'); }} 
-                    className="mt-3 px-4 py-1.5 bg-white rounded-lg shadow-sm text-sm font-semibold"
+
+                  {/* Receipt Upload */}
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className={`bg-white border-2 border-dashed rounded-2xl p-6 flex flex-col items-center justify-center cursor-pointer transition-all ${
+                      uploadState === 'success' 
+                        ? 'border-green-500 bg-green-50' 
+                        : uploadState === 'checking'
+                        ? 'border-blue-400 bg-blue-50'
+                        : uploadState === 'error'
+                        ? 'border-red-400 bg-red-50'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
                   >
-                    Qayta urinish
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      accept="image/*" 
+                      className="hidden" 
+                      onChange={handleFileChange}
+                    />
+                    
+                    {uploadState === 'idle' && (
+                      <>
+                        <div className="w-14 h-14 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-3 shadow-sm">
+                          <ImageIcon size={28} />
+                        </div>
+                        <p className="text-gray-900 font-bold text-center">Chek yuklash uchun bosing</p>
+                        <p className="text-gray-500 text-sm mt-1">Yoki rasmni shu yerga tashlang</p>
+                      </>
+                    )}
+                    
+                    {uploadState === 'checking' && (
+                      <>
+                        <div className="w-14 h-14 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center mb-3">
+                          <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-blue-600"></div>
+                        </div>
+                        <p className="text-blue-700 font-bold text-center">Chek AI tomonidan tekshirilmoqda...</p>
+                        <p className="text-blue-500 text-sm mt-1">Iltimos, kuting</p>
+                      </>
+                    )}
+                    
+                    {uploadState === 'success' && (
+                      <>
+                        <div className="w-14 h-14 bg-green-100 text-green-500 rounded-full flex items-center justify-center mb-3">
+                          <CheckCircle size={28} />
+                        </div>
+                        <p className="text-green-700 font-bold text-center">Tasdiqlandi!</p>
+                        <p className="text-green-600 text-sm mt-1">Hisobingiz muvaffaqiyatli to'ldirildi</p>
+                      </>
+                    )}
+
+                    {uploadState === 'error' && (
+                      <>
+                        <div className="w-14 h-14 bg-red-100 text-red-500 rounded-full flex items-center justify-center mb-3">
+                          <X size={28} />
+                        </div>
+                        <p className="text-red-700 font-bold text-center">Xatolik yuz berdi</p>
+                        <p className="text-red-600 text-sm mt-1 text-center">{uploadError}</p>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); setUploadState('idle'); }} 
+                          className="mt-3 px-4 py-1.5 bg-white rounded-lg shadow-sm text-sm font-semibold border border-red-100 text-red-600"
+                        >
+                          Qayta yuklash
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  <button 
+                    onClick={cancelOrder}
+                    className="w-full mt-4 py-3 text-red-500 font-semibold bg-red-50 rounded-xl active:scale-95"
+                  >
+                    Bekor qilish
                   </button>
-                </>
-              )}
+                </div>
+              </div>
+            )}
+
+            {/* Tushuntirish qismi */}
+            <div className="px-2">
+              <h4 className="font-bold text-gray-800 mb-4 ml-1">To'lov qanday ishlaydi?</h4>
+              <div className="space-y-4">
+                <div className="flex gap-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">1</div>
+                  <p className="text-sm text-gray-600 leading-snug"><strong className="text-gray-900">Summani kiriting:</strong> Qancha miqdorda pul kiritmoqchi bo'lsangiz yozing va "To'lov qilish" ni bosing.</p>
+                </div>
+                <div className="flex gap-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">2</div>
+                  <p className="text-sm text-gray-600 leading-snug"><strong className="text-gray-900">Pul o'tkazing:</strong> Berilgan 15 daqiqa ichida karta raqamiga (Payme/Click orqali) pul o'tkazing.</p>
+                </div>
+                <div className="flex gap-3">
+                  <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">3</div>
+                  <p className="text-sm text-gray-600 leading-snug"><strong className="text-gray-900">Chekni yuklang:</strong> Muvaffaqiyatli to'lov chekini skrinshot qilib, ilovaga yuklang.</p>
+                </div>
+                <div className="flex gap-3">
+                  <div className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center font-bold text-xs shrink-0 mt-0.5">4</div>
+                  <p className="text-sm text-gray-600 leading-snug"><strong className="text-gray-900">Avtomatik tasdiqlash:</strong> Sun'iy intellekt (AI) chekni tekshiradi va balansingiz darhol to'ldiriladi!</p>
+                </div>
+              </div>
             </div>
+
           </div>
         )}
       </div>
