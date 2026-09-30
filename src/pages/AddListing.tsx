@@ -21,10 +21,12 @@ export const AddListing: React.FC = () => {
     area: '',
     price: '',
     currency: 'so\'m',
+    rooms: '',
     floors: '',
     country: 'O\'zbekiston',
     region: '',
     district: '',
+    streetAddress: '',
     phone: '+998',
   });
 
@@ -117,9 +119,9 @@ export const AddListing: React.FC = () => {
         currency: formData.currency === "so'm" ? 'UZS' : 'USD',
         category,
         property_type: propTypeMap[propertyType] || 'APARTMENT',
-        rooms: parseInt(formData.floors) || 1,
+        rooms: parseInt(formData.rooms) || 1,
         area: parseFloat(formData.area) || null,
-        address: [formData.country, formData.region, formData.district].filter(Boolean).join(', '),
+        address: [formData.country, formData.region, formData.district, formData.streetAddress].filter(Boolean).join(', '),
         images: images,
       });
 
@@ -372,6 +374,20 @@ export const AddListing: React.FC = () => {
           </div>
         </div>
 
+        {/* Rooms */}
+        <div>
+          <h3 className="font-bold text-gray-900 mb-2">{t('add.rooms')}</h3>
+          <input 
+            required
+            name="rooms"
+            value={formData.rooms}
+            onChange={handleChange}
+            type="number" 
+            placeholder={t('add.roomsPlaceholder')}
+            className="w-full p-3.5 bg-gray-50 border border-gray-50 rounded-xl focus:border-gray-200 focus:bg-white transition-all outline-none font-medium"
+          />
+        </div>
+
         {/* Floors */}
         <div>
           <h3 className="font-bold text-gray-900 mb-2">{t('add.floors')}</h3>
@@ -427,6 +443,20 @@ export const AddListing: React.FC = () => {
             </span>
             <ChevronDown size={20} className="text-gray-400" />
           </button>
+        </div>
+
+        {/* Street Address */}
+        <div>
+          <h3 className="font-bold text-gray-900 mb-2">{t('add.streetAddress')}</h3>
+          <input 
+            required
+            name="streetAddress"
+            value={formData.streetAddress}
+            onChange={handleChange}
+            type="text" 
+            placeholder={t('add.streetAddressPlaceholder')}
+            className="w-full p-3.5 bg-gray-50 border border-gray-50 rounded-xl focus:border-gray-200 focus:bg-white transition-all outline-none font-medium"
+          />
         </div>
 
         {/* Phone */}
