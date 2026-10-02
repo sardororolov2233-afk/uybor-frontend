@@ -5,6 +5,7 @@ import WebApp from '@twa-dev/sdk';
 import { useTranslation } from '../i18n/LanguageContext';
 import { SelectSheet } from '../components/SelectSheet';
 import { createListing } from '../api/listings';
+import imageCompression from 'browser-image-compression';
 
 export const AddListing: React.FC = () => {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export const AddListing: React.FC = () => {
   const [step, setStep] = useState(1);
   const [goal, setGoal] = useState('');
   const [propertyType, setPropertyType] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -73,13 +75,30 @@ export const AddListing: React.FC = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
       const remainingSlots = 5 - images.length;
       const filesToProcess = filesArray.slice(0, remainingSlots);
       
-      setImages(prev => [...prev, ...filesToProcess]);
+      const compressedFiles = await Promise.all(
+        filesToProcess.map(async (file) => {
+          try {
+            const options = {
+              maxSizeMB: 0.5,
+              maxWidthOrHeight: 1280,
+              useWebWorker: false,
+            };
+            const compressedBlob = await imageCompression(file, options);
+            return new File([compressedBlob], file.name, { type: compressedBlob.type });
+          } catch (error) {
+            console.error('Error compressing image:', error);
+            return file;
+          }
+        })
+      );
+      
+      setImages(prev => [...prev, ...compressedFiles]);
     }
   };
 
@@ -93,8 +112,10 @@ export const AddListing: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
-      const category = ['sell', 'rent_out', 'daily_rent'].includes(goal) ? 'SALE' : 'RENT';
+      const category = ['sell', 'buy', 'rent_out', 'daily_rent'].includes(goal) ? 'SALE' : 'RENT';
       const propTypeMap: Record<string, string> = {
         apartment: 'APARTMENT',
         house: 'HOUSE',
@@ -132,6 +153,8 @@ export const AddListing: React.FC = () => {
       } else {
         alert(t('add.error'));
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -295,6 +318,7 @@ export const AddListing: React.FC = () => {
             value={formData.description}
             onChange={handleChange}
             rows={5}
+            maxLength={1000}
             placeholder={t('add.descPlaceholder')}
             className="w-full p-3.5 bg-gray-50 border border-gray-50 rounded-xl focus:border-gray-200 focus:bg-white transition-all outline-none resize-none font-medium"
           />
@@ -487,9 +511,10 @@ export const AddListing: React.FC = () => {
 
         <button 
           type="submit"
-          className="w-full py-4 bg-black text-white rounded-[20px] font-bold text-lg active:scale-[0.98] transition-transform mt-6"
+          disabled={isSubmitting}
+          className="w-full py-4 bg-black text-white rounded-[20px] font-bold text-lg active:scale-[0.98] transition-transform mt-6 disabled:opacity-70"
         >
-          {t('add.ready')}
+          {isSubmitting ? 'Yuklanmoqda...' : t('add.ready')}
         </button>
       </form>
 

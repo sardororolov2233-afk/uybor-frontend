@@ -5,6 +5,7 @@ import WebApp from '@twa-dev/sdk';
 import { useTranslation } from '../i18n/LanguageContext';
 import { SelectSheet } from '../components/SelectSheet';
 import { fetchListingById, updateListingApi } from '../api/listings';
+import imageCompression from 'browser-image-compression';
 
 export const EditListing: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -15,6 +16,7 @@ export const EditListing: React.FC = () => {
   const [goal, setGoal] = useState('sell');
   const [propertyType, setPropertyType] = useState('apartment');
   const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -23,10 +25,12 @@ export const EditListing: React.FC = () => {
     area: '',
     price: '',
     currency: 'so\'m',
+    rooms: '',
     floors: '',
     country: 'O\'zbekiston',
     region: '',
     district: '',
+    streetAddress: '',
     phone: '+998',
   });
 
@@ -64,7 +68,7 @@ export const EditListing: React.FC = () => {
     const load = async () => {
       try {
         const data = await fetchListingById(id);
-        const [c, r, d] = (data.address || '').split(', ');
+        const [c, r, d, ...s] = (data.address || '').split(', ');
         setFormData({
           title: data.title || '',
           description: data.description || '',
@@ -72,10 +76,12 @@ export const EditListing: React.FC = () => {
           area: (data.area || '').toString(),
           price: (data.price || '').toString(),
           currency: data.currency === 'USD' ? 'y.e' : 'so\'m',
-          floors: (data.rooms || '').toString(),
+          rooms: (data.rooms || '').toString(),
+          floors: '', // Add floors from DB if it existed, but currently backend doesn't save floors
           country: c || 'O\'zbekiston',
           region: r || '',
           district: d || '',
+          streetAddress: s.join(', ') || '',
           phone: data.users?.phone_number || '+998',
         });
         setImages(data.images || []);
@@ -104,13 +110,30 @@ export const EditListing: React.FC = () => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const filesArray = Array.from(e.target.files);
       const remainingSlots = 5 - images.length;
       const filesToProcess = filesArray.slice(0, remainingSlots);
       
-      setImages(prev => [...prev, ...filesToProcess]);
+      const compressedFiles = await Promise.all(
+        filesToProcess.map(async (file) => {
+          try {
+            const options = {
+              maxSizeMB: 0.5,
+              maxWidthOrHeight: 1280,
+              useWebWorker: false,
+            };
+            const compressedBlob = await imageCompression(file, options);
+            return new File([compressedBlob], file.name, { type: compressedBlob.type });
+          } catch (error) {
+            console.error('Error compressing image:', error);
+            return file;
+          }
+        })
+      );
+      
+      setImages(prev => [...prev, ...compressedFiles]);
     }
   };
 
@@ -124,8 +147,10 @@ export const EditListing: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
-      const category = ['sell', 'rent_out', 'daily_rent'].includes(goal) ? 'SALE' : 'RENT';
+      const category = ['sell', 'buy', 'rent_out', 'daily_rent'].includes(goal) ? 'SALE' : 'RENT';
       const propTypeMap: Record<string, string> = {
         apartment: 'APARTMENT',
         house: 'HOUSE',
@@ -141,9 +166,9 @@ export const EditListing: React.FC = () => {
         formDataToSend.append('currency', formData.currency === "so'm" ? 'UZS' : 'USD');
         formDataToSend.append('category', category);
         formDataToSend.append('property_type', propTypeMap[propertyType] || 'APARTMENT');
-        formDataToSend.append('rooms', String(parseInt(formData.floors) || 1));
+        formDataToSend.append('rooms', String(parseInt(formData.rooms) || 1));
         if (formData.area) formDataToSend.append('area', formData.area);
-        formDataToSend.append('address', [formData.country, formData.region, formData.district].filter(Boolean).join(', '));
+        formDataToSend.append('address', [formData.country, formData.region, formData.district, formData.streetAddress].filter(Boolean).join(', '));
         
         images.forEach(image => {
           if (typeof image === 'string') {
@@ -169,6 +194,8 @@ export const EditListing: React.FC = () => {
       } else {
         alert(t('add.error'));
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -340,6 +367,7 @@ export const EditListing: React.FC = () => {
             value={formData.description}
             onChange={handleChange}
             rows={5}
+            maxLength={1000}
             placeholder={t('add.descPlaceholder')}
             className="w-full p-3.5 bg-gray-50 border border-gray-50 rounded-xl focus:border-gray-200 focus:bg-white transition-all outline-none resize-none font-medium"
           />
@@ -413,6 +441,20 @@ export const EditListing: React.FC = () => {
           </div>
         </div>
 
+        {/* Rooms */}
+        <div>
+          <h3 className="font-bold text-gray-900 mb-2">{t('add.rooms')}</h3>
+          <input 
+            required
+            name="rooms"
+            value={formData.rooms}
+            onChange={handleChange}
+            type="number" 
+            placeholder={t('add.roomsPlaceholder')}
+            className="w-full p-3.5 bg-gray-50 border border-gray-50 rounded-xl focus:border-gray-200 focus:bg-white transition-all outline-none font-medium"
+          />
+        </div>
+
         {/* Floors */}
         <div>
           <h3 className="font-bold text-gray-900 mb-2">{t('add.floors')}</h3>
@@ -470,6 +512,20 @@ export const EditListing: React.FC = () => {
           </button>
         </div>
 
+        {/* Street Address */}
+        <div>
+          <h3 className="font-bold text-gray-900 mb-2">{t('add.streetAddress')}</h3>
+          <input 
+            required
+            name="streetAddress"
+            value={formData.streetAddress}
+            onChange={handleChange}
+            type="text" 
+            placeholder={t('add.streetAddressPlaceholder')}
+            className="w-full p-3.5 bg-gray-50 border border-gray-50 rounded-xl focus:border-gray-200 focus:bg-white transition-all outline-none font-medium"
+          />
+        </div>
+
         {/* Phone */}
         <div>
           <h3 className="font-bold text-gray-900 mb-2">{t('add.phone')}</h3>
@@ -504,9 +560,10 @@ export const EditListing: React.FC = () => {
 
         <button 
           type="submit"
-          className="w-full py-4 bg-black text-white rounded-[20px] font-bold text-lg active:scale-[0.98] transition-transform mt-6"
+          disabled={isSubmitting}
+          className="w-full py-4 bg-black text-white rounded-[20px] font-bold text-lg active:scale-[0.98] transition-transform mt-6 disabled:opacity-70"
         >
-          {t('add.ready')}
+          {isSubmitting ? 'Yuklanmoqda...' : t('add.ready')}
         </button>
       </form>
 
