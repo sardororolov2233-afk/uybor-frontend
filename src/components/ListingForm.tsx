@@ -132,7 +132,7 @@ export const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit,
     if (isSubmitting || isLoading) return;
     setIsSubmitting(true);
     try {
-      const category = ['sell', 'buy', 'rent_out', 'daily_rent'].includes(goal) ? 'SALE' : 'RENT';
+      const category = ['sell', 'buy'].includes(goal) ? 'SALE' : 'RENT';
       const propTypeMap: Record<string, string> = {
         apartment: 'APARTMENT',
         house: 'HOUSE',

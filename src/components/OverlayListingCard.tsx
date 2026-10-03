@@ -16,6 +16,7 @@ export const OverlayListingCard: React.FC<OverlayListingCardProps> = ({ listing,
             src={listing.images[0]} 
             alt={listing.title} 
             className="absolute inset-0 w-full h-full object-cover"
+            loading="lazy"
           />
         ) : null}
         

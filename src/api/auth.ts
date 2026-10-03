@@ -10,19 +10,19 @@ export async function loginWithTelegram(): Promise<{ token: string; user: any } 
     const tg = (window as any)?.Telegram?.WebApp || WebApp;
     try {
       initData = tg?.initData || '';
-      console.log('[AUTH] Telegram WebApp initData length:', initData.length);
+      // console.log('[AUTH] Telegram WebApp initData length:', initData.length);
     } catch (e) {
-      console.warn('[AUTH] WebApp not available:', e);
+      // console.warn('[AUTH] WebApp not available:', e);
     }
 
     if (!initData) {
-      console.warn('[AUTH] No Telegram initData available — cannot authenticate');
+      // console.warn('[AUTH] No Telegram initData available — cannot authenticate');
       return null;
     }
 
-    console.log('[AUTH] Sending initData to backend...');
+    // console.log('[AUTH] Sending initData to backend...');
     const { data } = await api.post('/auth/telegram', { initData });
-    console.log('[AUTH] Backend response:', JSON.stringify(data?.user));
+    // console.log('[AUTH] Backend response:', JSON.stringify(data?.user));
 
     if (data?.token) {
       localStorage.setItem(TOKEN_KEY, data.token);

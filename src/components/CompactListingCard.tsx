@@ -19,6 +19,7 @@ export const CompactListingCard: React.FC<CompactListingCardProps> = ({ listing 
               src={listing.images[0]} 
               alt={listing.title} 
               className="w-full h-full object-cover"
+              loading="lazy"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
