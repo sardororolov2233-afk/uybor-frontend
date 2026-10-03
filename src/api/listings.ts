@@ -19,12 +19,12 @@ export async function fetchListingById(id: string): Promise<Listing> {
 }
 
 export async function createListing(listing: FormData | Partial<Listing>): Promise<Listing> {
-  const { data } = await api.post('/listings', listing);
+  const { data } = await api.post('/listings', listing, { headers: { 'Content-Type': 'multipart/form-data' } });
   return data;
 }
 
 export async function updateListingApi(id: string, listing: FormData | Partial<Listing>): Promise<Listing> {
-  const { data } = await api.put(`/listings/${id}`, listing);
+  const { data } = await api.put(`/listings/${id}`, listing, { headers: { 'Content-Type': 'multipart/form-data' } });
   return data;
 }
 
