@@ -4,7 +4,7 @@ import './index.css'
 import App from './App.tsx'
 import { LanguageProvider } from './i18n/LanguageContext.tsx'
 import eruda from 'eruda';
-import WebApp from '@twa-dev/sdk';
+
 
 
 eruda.init();
