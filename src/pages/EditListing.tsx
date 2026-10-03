@@ -6,6 +6,7 @@ import { useTranslation } from '../i18n/LanguageContext';
 import { SelectSheet } from '../components/SelectSheet';
 import { fetchListingById, updateListingApi } from '../api/listings';
 import imageCompression from 'browser-image-compression';
+import { uzbekistanRegions } from '../constants/regions';
 
 export const EditListing: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -39,23 +40,6 @@ export const EditListing: React.FC = () => {
 
   const [activeSelect, setActiveSelect] = useState<'region' | 'district' | 'country' | null>(null);
 
-  // Reusing region data from Home
-  const uzbekistanRegions = {
-    "Toshkent shahri": ["Yunusobod", "Chilonzor", "Mirzo Ulug'bek", "Yashnobod", "Sirg'ali", "Yakkasaroy", "Olmazor", "Uchtepa", "Shayxontohur", "Mirobod", "Bektemir", "Yangihayot"],
-    "Toshkent viloyati": ["Zangiota", "Qibray", "Toshkent tumani", "Parkent", "Yangiyo'l", "Chirchiq", "Angren", "Olmaliq", "Ohangaron", "Bo'stonliq"],
-    "Samarqand viloyati": ["Samarqand shahri", "Urgut", "Tayloq", "Jomboy", "Pastdarg'om", "Bulung'ur", "Kattaqo'rg'on"],
-    "Farg'ona viloyati": ["Farg'ona shahri", "Marg'ilon", "Qo'qon", "Buvayda", "Oltiariq", "Qo'shtepa", "Rishton"],
-    "Andijon viloyati": ["Andijon shahri", "Asaka", "Shahrixon", "Xo'jaobod", "Buloqboshi", "Baliqchi"],
-    "Namangan viloyati": ["Namangan shahri", "Chust", "Kosonsoy", "Uychi", "To'raqo'rg'on", "Pop"],
-    "Buxoro viloyati": ["Buxoro shahri", "G'ijduvon", "Vobkent", "Jondor", "Kogon", "Peshku", "Qorako'l"],
-    "Xorazm viloyati": ["Urganch", "Xiva", "Xonqa", "Shovot", "Hazorasp", "Bog'ot"],
-    "Qashqadaryo viloyati": ["Qarshi", "Shahrisabz", "Kitob", "Yakkabog'", "Qamashi", "Chiroqchi"],
-    "Surxondaryo viloyati": ["Termiz", "Denov", "Boysun", "Sho'rchi", "Qumqo'rg'on", "Sherobod"],
-    "Jizzax viloyati": ["Jizzax shahri", "Zomin", "Forish", "Paxtakor", "G'allaorol"],
-    "Sirdaryo viloyati": ["Guliston", "Sirdaryo", "Boyovut", "Oqoltin", "Sayxunobod"],
-    "Navoiy viloyati": ["Navoiy shahri", "Zarafshon", "Karmana", "Qiziltepa", "Nurota", "Xatirchi"],
-    "Qoraqalpog'iston": ["Nukus", "Xo'jayli", "Beruniy", "To'rtko'l", "Amudaryo", "Chimboy", "Mo'ynoq"]
-  };
 
   const regionOptions = Object.keys(uzbekistanRegions).map(r => ({ value: r, label: r }));
   const districtOptions = formData.region 

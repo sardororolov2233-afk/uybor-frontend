@@ -1,17 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense, lazy } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import WebApp from '@twa-dev/sdk';
 import { Layout } from './components/Layout';
-import { Home } from './pages/Home';
-import { Details } from './pages/Details';
-import { AddListing } from './pages/AddListing';
-import { EditListing } from './pages/EditListing';
-import { MyListings } from './pages/MyListings';
-import { AllListings } from './pages/AllListings';
-import { Messages } from './pages/Messages';
-import { Favorites } from './pages/Favorites';
-import { SavedSearches } from './pages/SavedSearches';
 import { loginWithTelegram } from './api/auth';
+import { ProtectedRoute } from './components/ProtectedRoute';
+
+const Home = lazy(() => import('./pages/Home').then(m => ({ default: m.Home })));
+const Details = lazy(() => import('./pages/Details').then(m => ({ default: m.Details })));
+const AddListing = lazy(() => import('./pages/AddListing').then(m => ({ default: m.AddListing })));
+const EditListing = lazy(() => import('./pages/EditListing').then(m => ({ default: m.EditListing })));
+const MyListings = lazy(() => import('./pages/MyListings').then(m => ({ default: m.MyListings })));
+const AllListings = lazy(() => import('./pages/AllListings').then(m => ({ default: m.AllListings })));
+const Messages = lazy(() => import('./pages/Messages').then(m => ({ default: m.Messages })));
+const Favorites = lazy(() => import('./pages/Favorites').then(m => ({ default: m.Favorites })));
+const SavedSearches = lazy(() => import('./pages/SavedSearches').then(m => ({ default: m.SavedSearches })));
 
 const App: React.FC = () => {
   const [ready, setReady] = useState(false);
@@ -77,19 +79,21 @@ const App: React.FC = () => {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="all-listings" element={<AllListings />} />
-          <Route path="messages" element={<Messages />} />
-          <Route path="listing/:id" element={<Details />} />
-          <Route path="add" element={<AddListing />} />
-          <Route path="edit/:id" element={<EditListing />} />
-          <Route path="my-listings" element={<MyListings />} />
-          <Route path="favorites" element={<Favorites />} />
-          <Route path="saved-searches" element={<SavedSearches />} />
-        </Route>
-      </Routes>
+      <Suspense fallback={<div className="flex h-screen items-center justify-center">Yuklanmoqda...</div>}>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="all-listings" element={<AllListings />} />
+            <Route path="messages" element={<ProtectedRoute><Messages /></ProtectedRoute>} />
+            <Route path="listing/:id" element={<Details />} />
+            <Route path="add" element={<ProtectedRoute><AddListing /></ProtectedRoute>} />
+            <Route path="edit/:id" element={<ProtectedRoute><EditListing /></ProtectedRoute>} />
+            <Route path="my-listings" element={<ProtectedRoute><MyListings /></ProtectedRoute>} />
+            <Route path="favorites" element={<Favorites />} />
+            <Route path="saved-searches" element={<SavedSearches />} />
+          </Route>
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 };
