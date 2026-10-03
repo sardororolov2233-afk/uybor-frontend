@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import WebApp from '@twa-dev/sdk';
 import { useTranslation } from '../i18n/LanguageContext';
 import { fetchListingById, updateListingApi } from '../api/listings';
-import { ListingForm, ListingData } from '../components/ListingForm';
+import { ListingForm, type ListingData } from '../components/ListingForm';
 
 export const EditListing: React.FC = () => {
   const { id } = useParams<{ id: string }>();
