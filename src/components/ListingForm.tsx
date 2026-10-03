@@ -41,6 +41,7 @@ export const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit,
   const [goal, setGoal] = useState(initialData?.goal || '');
   const [propertyType, setPropertyType] = useState(initialData?.propertyType || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   
   const [formData, setFormData] = useState(initialData?.formData || {
     title: '',
@@ -130,6 +131,7 @@ export const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit,
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting || isLoading) return;
+    setSubmitError(null);
     setIsSubmitting(true);
     try {
       const category = ['sell', 'buy'].includes(goal) ? 'SALE' : 'RENT';
@@ -160,6 +162,10 @@ export const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit,
       });
 
       await onSubmit(formDataToSend);
+    } catch (error: any) {
+      console.error('[ListingForm Submit Error]:', error);
+      const errorMsg = error?.response?.data?.error || error.message || 'Xatolik yuz berdi. Iltimos qaytadan urinib ko\'ring.';
+      setSubmitError(errorMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -266,6 +272,12 @@ export const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit,
       {renderHeader()}
       <form onSubmit={handleSubmit} className="p-4 space-y-6">
         
+        {submitError && (
+          <div className="bg-red-50 border border-red-200 text-red-600 p-3 rounded-xl text-sm font-medium">
+            ⚠️ {submitError}
+          </div>
+        )}
+
         {/* Photos */}
         <div>
           <div className="flex justify-between items-center mb-1">
