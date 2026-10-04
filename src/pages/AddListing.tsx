@@ -2,18 +2,38 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import WebApp from '@twa-dev/sdk';
 import { useTranslation } from '../i18n/LanguageContext';
-import { createListing } from '../api/listings';
-import { ListingForm } from '../components/ListingForm';
+import { createListingDirect } from '../api/listings';
+import { ListingForm, type ListingSubmitData } from '../components/ListingForm';
 
 export const AddListing: React.FC = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = async (formDataToSend: FormData) => {
+  const handleSubmit = async (data: ListingSubmitData) => {
     setIsSubmitting(true);
     try {
-      await createListing(formDataToSend);
+      const category = ['sell', 'buy'].includes(data.goal) ? 'SALE' : 'RENT';
+      const propTypeMap: Record<string, string> = {
+        apartment: 'APARTMENT',
+        house: 'HOUSE',
+        commercial: 'COMMERCIAL',
+        land: 'LAND',
+      };
+
+      await createListingDirect({
+        title: data.formData.title,
+        description: data.formData.description,
+        price: parseFloat(data.formData.price) || 0,
+        currency: data.formData.currency === "so'm" ? 'UZS' : 'USD',
+        category,
+        property_type: propTypeMap[data.propertyType] || 'APARTMENT',
+        rooms: parseInt(data.formData.rooms) || 1,
+        area: data.formData.area ? parseFloat(data.formData.area) : null,
+        address: [data.formData.country, data.formData.region, data.formData.district, data.formData.streetAddress]
+          .filter(Boolean).join(', '),
+        imageUrls: data.imageUrls,
+      });
 
       if (WebApp && WebApp.showAlert) {
         WebApp.showAlert(t('add.success'));
@@ -21,12 +41,12 @@ export const AddListing: React.FC = () => {
         alert(t('add.success'));
       }
       navigate('/my-listings');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating listing:', error);
       if (WebApp && WebApp.showAlert) {
-        WebApp.showAlert(t('add.error'));
+        WebApp.showAlert(error?.message || t('add.error'));
       } else {
-        alert(t('add.error'));
+        alert(error?.message || t('add.error'));
       }
     } finally {
       setIsSubmitting(false);

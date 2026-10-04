@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import WebApp from '@twa-dev/sdk';
 import { useTranslation } from '../i18n/LanguageContext';
-import { fetchListingById, updateListingApi } from '../api/listings';
-import { ListingForm, type ListingData } from '../components/ListingForm';
+import { fetchListingById, updateListingDirect } from '../api/listings';
+import { ListingForm, type ListingData, type ListingSubmitData } from '../components/ListingForm';
 
 export const EditListing: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -39,7 +39,7 @@ export const EditListing: React.FC = () => {
             streetAddress: s.join(', ') || '',
             phone: data.users?.phone_number || '+998',
           },
-          images: data.images || []
+          images: data.images || [] // string[] — existing URLs
         });
       } catch (err) {
         console.error('Error loading listing to edit:', err);
@@ -50,11 +50,31 @@ export const EditListing: React.FC = () => {
     load();
   }, [id]);
 
-  const handleSubmit = async (formDataToSend: FormData) => {
+  const handleSubmit = async (data: ListingSubmitData) => {
     if (!id) return;
     setIsSubmitting(true);
     try {
-      await updateListingApi(id, formDataToSend);
+      const category = ['sell', 'buy'].includes(data.goal) ? 'SALE' : 'RENT';
+      const propTypeMap: Record<string, string> = {
+        apartment: 'APARTMENT',
+        house: 'HOUSE',
+        commercial: 'COMMERCIAL',
+        land: 'LAND',
+      };
+
+      await updateListingDirect(id, {
+        title: data.formData.title,
+        description: data.formData.description,
+        price: parseFloat(data.formData.price) || 0,
+        currency: data.formData.currency === "so'm" ? 'UZS' : 'USD',
+        category,
+        property_type: propTypeMap[data.propertyType] || 'APARTMENT',
+        rooms: parseInt(data.formData.rooms) || 1,
+        area: data.formData.area ? parseFloat(data.formData.area) : null,
+        address: [data.formData.country, data.formData.region, data.formData.district, data.formData.streetAddress]
+          .filter(Boolean).join(', '),
+        imageUrls: data.imageUrls,
+      });
 
       if (WebApp && WebApp.showAlert) {
         WebApp.showAlert("E'lon muvaffaqiyatli saqlandi!");
@@ -62,12 +82,12 @@ export const EditListing: React.FC = () => {
         alert("E'lon muvaffaqiyatli saqlandi!");
       }
       navigate('/my-listings');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating listing:', error);
       if (WebApp && WebApp.showAlert) {
-        WebApp.showAlert(t('add.error'));
+        WebApp.showAlert(error?.message || t('add.error'));
       } else {
-        alert(t('add.error'));
+        alert(error?.message || t('add.error'));
       }
     } finally {
       setIsSubmitting(false);

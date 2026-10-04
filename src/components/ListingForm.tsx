@@ -1,36 +1,55 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Camera, ChevronLeft, Home, Hourglass, Handshake, Map as MapIcon, ChevronRight, ChevronDown, X } from 'lucide-react';
+import { Camera, ChevronLeft, Home, Hourglass, Handshake, Map as MapIcon, ChevronRight, ChevronDown, X, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '../i18n/LanguageContext';
 import { SelectSheet } from './SelectSheet';
-import imageCompression from 'browser-image-compression';
+import { uploadImages } from '../api/listings';
+import { getUser } from '../api/auth';
 import { uzbekistanRegions } from '../constants/regions';
 
+export interface ListingFormData {
+  title: string;
+  description: string;
+  whoPosted: string;
+  area: string;
+  price: string;
+  currency: string;
+  rooms: string;
+  floors: string;
+  country: string;
+  region: string;
+  district: string;
+  streetAddress: string;
+  phone: string;
+}
+
+export interface ListingSubmitData {
+  goal: string;
+  propertyType: string;
+  formData: ListingFormData;
+  imageUrls: string[];
+}
+
+// Keep old interface for backward compat with EditListing initial data
 export interface ListingData {
   goal: string;
   propertyType: string;
-  formData: {
-    title: string;
-    description: string;
-    whoPosted: string;
-    area: string;
-    price: string;
-    currency: string;
-    rooms: string;
-    floors: string;
-    country: string;
-    region: string;
-    district: string;
-    streetAddress: string;
-    phone: string;
-  };
+  formData: ListingFormData;
   images: (File | string)[];
 }
 
 export interface ListingFormProps {
   initialData?: ListingData;
-  onSubmit: (formDataToSend: FormData) => Promise<void>;
+  onSubmit: (data: ListingSubmitData) => Promise<void>;
   isLoading?: boolean;
+}
+
+interface ImageItem {
+  id: string;
+  file?: File;
+  url?: string;      // already uploaded URL (for editing)
+  status: 'pending' | 'uploading' | 'done' | 'error';
+  previewUrl: string; // local preview
 }
 
 export const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit, isLoading = false }) => {
@@ -42,8 +61,9 @@ export const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit,
   const [propertyType, setPropertyType] = useState(initialData?.propertyType || '');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [uploadingImages, setUploadingImages] = useState(false);
   
-  const [formData, setFormData] = useState(initialData?.formData || {
+  const [formData, setFormData] = useState<ListingFormData>(initialData?.formData || {
     title: '',
     description: '',
     whoPosted: 'rieltor',
@@ -59,7 +79,7 @@ export const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit,
     phone: '+998',
   });
 
-  const [images, setImages] = useState<(File | string)[]>(initialData?.images || []);
+  const [images, setImages] = useState<ImageItem[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [activeSelect, setActiveSelect] = useState<'region' | 'district' | 'country' | null>(null);
@@ -70,12 +90,30 @@ export const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit,
     : [];
   const countryOptions = [{ value: "O'zbekiston", label: "O'zbekiston" }, { value: "Qozog'iston", label: "Qozog'iston" }, { value: "Tojikiston", label: "Tojikiston" }];
 
+  // initialData dan rasmlarni yuklash
   useEffect(() => {
     if (initialData) {
       setGoal(initialData.goal);
       setPropertyType(initialData.propertyType);
       setFormData(initialData.formData);
-      setImages(initialData.images);
+      
+      const items: ImageItem[] = initialData.images.map((img, idx) => {
+        if (typeof img === 'string') {
+          return {
+            id: `existing-${idx}`,
+            url: img,
+            status: 'done' as const,
+            previewUrl: img,
+          };
+        }
+        return {
+          id: `file-${idx}-${Date.now()}`,
+          file: img,
+          status: 'pending' as const,
+          previewUrl: URL.createObjectURL(img),
+        };
+      });
+      setImages(items);
     }
   }, [initialData]);
 
@@ -93,35 +131,103 @@ export const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit,
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  // Rasm tanlanganda — darhol Supabase'ga yuklash boshlanadi
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const filesArray = Array.from(e.target.files);
-      const remainingSlots = 5 - images.length;
-      const filesToProcess = filesArray.slice(0, remainingSlots);
-      
-      const compressedFiles = await Promise.all(
-        filesToProcess.map(async (file) => {
-          try {
-            const options = {
-              maxSizeMB: 0.5,
-              maxWidthOrHeight: 1280,
-              useWebWorker: false,
-            };
-            const compressedBlob = await imageCompression(file, options);
-            return new File([compressedBlob], file.name, { type: compressedBlob.type });
-          } catch (error) {
-            console.error('Error compressing image:', error);
-            return file;
-          }
-        })
-      );
-      
-      setImages(prev => [...prev, ...compressedFiles]);
+    if (!e.target.files) return;
+    
+    const filesArray = Array.from(e.target.files);
+    const remainingSlots = 5 - images.length;
+    const filesToProcess = filesArray.slice(0, remainingSlots);
+    
+    if (!filesToProcess.length) return;
+
+    const user = getUser();
+    const userId = user?.id || user?.telegram_id?.toString() || 'anonymous';
+
+    // Har bir fayl uchun ImageItem yaratish (pending holatda)
+    const newItems: ImageItem[] = filesToProcess.map((file, idx) => ({
+      id: `new-${Date.now()}-${idx}`,
+      file,
+      status: 'uploading' as const,
+      previewUrl: URL.createObjectURL(file),
+    }));
+
+    setImages(prev => [...prev, ...newItems]);
+    setUploadingImages(true);
+
+    // Parallel yuklash
+    const uploadPromises = newItems.map(async (item) => {
+      try {
+        const urls = await uploadImages([item.file!], userId);
+        if (urls.length > 0) {
+          setImages(prev => prev.map(img => 
+            img.id === item.id 
+              ? { ...img, url: urls[0], status: 'done' as const }
+              : img
+          ));
+        } else {
+          setImages(prev => prev.map(img => 
+            img.id === item.id 
+              ? { ...img, status: 'error' as const }
+              : img
+          ));
+        }
+      } catch {
+        setImages(prev => prev.map(img => 
+          img.id === item.id 
+            ? { ...img, status: 'error' as const }
+            : img
+        ));
+      }
+    });
+
+    await Promise.all(uploadPromises);
+    setUploadingImages(false);
+
+    // Reset input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
     }
   };
 
-  const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
+  const removeImage = (id: string) => {
+    setImages(prev => {
+      const item = prev.find(img => img.id === id);
+      if (item?.previewUrl && item.file) {
+        URL.revokeObjectURL(item.previewUrl);
+      }
+      return prev.filter(img => img.id !== id);
+    });
+  };
+
+  // Xato bo'lgan rasmni qayta yuklash
+  const retryImage = async (id: string) => {
+    const item = images.find(img => img.id === id);
+    if (!item?.file) return;
+
+    const user = getUser();
+    const userId = user?.id || user?.telegram_id?.toString() || 'anonymous';
+
+    setImages(prev => prev.map(img => 
+      img.id === id ? { ...img, status: 'uploading' as const } : img
+    ));
+
+    try {
+      const urls = await uploadImages([item.file], userId);
+      if (urls.length > 0) {
+        setImages(prev => prev.map(img => 
+          img.id === id ? { ...img, url: urls[0], status: 'done' as const } : img
+        ));
+      } else {
+        setImages(prev => prev.map(img => 
+          img.id === id ? { ...img, status: 'error' as const } : img
+        ));
+      }
+    } catch {
+      setImages(prev => prev.map(img => 
+        img.id === id ? { ...img, status: 'error' as const } : img
+      ));
+    }
   };
 
   const handleMapClick = () => {
@@ -130,41 +236,40 @@ export const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit,
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isSubmitting || isLoading) return;
+    if (isSubmitting || isLoading || uploadingImages) return;
+
+    // Hali yuklanmagan rasmlar bormi?
+    const hasUploading = images.some(img => img.status === 'uploading');
+    if (hasUploading) {
+      setSubmitError('Rasmlar hali yuklanmoqda, kuting...');
+      return;
+    }
+
+    // Xato bo'lgan rasmlar haqida ogohlantirish
+    const errorImages = images.filter(img => img.status === 'error');
+    if (errorImages.length > 0 && images.every(img => img.status === 'error')) {
+      setSubmitError('Barcha rasmlar yuklanishda xatolik. Qayta urinib ko\'ring.');
+      return;
+    }
+
     setSubmitError(null);
     setIsSubmitting(true);
+
     try {
-      const category = ['sell', 'buy'].includes(goal) ? 'SALE' : 'RENT';
-      const propTypeMap: Record<string, string> = {
-        apartment: 'APARTMENT',
-        house: 'HOUSE',
-        commercial: 'COMMERCIAL',
-        land: 'LAND',
-      };
+      // Faqat muvaffaqiyatli yuklangan rasm URL'larini yig'ish
+      const imageUrls = images
+        .filter(img => img.status === 'done' && img.url)
+        .map(img => img.url!);
 
-      const formDataToSend = new FormData();
-      formDataToSend.append('title', formData.title);
-      formDataToSend.append('description', formData.description);
-      formDataToSend.append('price', formData.price);
-      formDataToSend.append('currency', formData.currency === "so'm" ? 'UZS' : 'USD');
-      formDataToSend.append('category', category);
-      formDataToSend.append('property_type', propTypeMap[propertyType] || 'APARTMENT');
-      formDataToSend.append('rooms', String(parseInt(formData.rooms) || 1));
-      if (formData.area) formDataToSend.append('area', formData.area);
-      formDataToSend.append('address', [formData.country, formData.region, formData.district, formData.streetAddress].filter(Boolean).join(', '));
-      
-      images.forEach(image => {
-        if (typeof image === 'string') {
-          formDataToSend.append('existingImages', image);
-        } else {
-          formDataToSend.append('images', image);
-        }
+      await onSubmit({
+        goal,
+        propertyType,
+        formData,
+        imageUrls,
       });
-
-      await onSubmit(formDataToSend);
     } catch (error: any) {
       console.error('[ListingForm Submit Error]:', error);
-      const errorMsg = error?.response?.data?.error || error.message || 'Xatolik yuz berdi. Iltimos qaytadan urinib ko\'ring.';
+      const errorMsg = error?.message || 'Xatolik yuz berdi. Iltimos qaytadan urinib ko\'ring.';
       setSubmitError(errorMsg);
     } finally {
       setIsSubmitting(false);
@@ -185,6 +290,37 @@ export const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit,
       </button>
     </div>
   );
+
+  // Rasm status badge
+  const renderImageBadge = (item: ImageItem) => {
+    if (item.status === 'uploading') {
+      return (
+        <div className="absolute inset-0 bg-black/40 flex items-center justify-center rounded-2xl">
+          <Loader2 size={24} className="text-white animate-spin" />
+        </div>
+      );
+    }
+    if (item.status === 'error') {
+      return (
+        <button
+          type="button"
+          onClick={() => retryImage(item.id)}
+          className="absolute inset-0 bg-red-500/40 flex flex-col items-center justify-center rounded-2xl"
+        >
+          <AlertCircle size={20} className="text-white" />
+          <span className="text-white text-[10px] font-bold mt-1">Qayta</span>
+        </button>
+      );
+    }
+    if (item.status === 'done') {
+      return (
+        <div className="absolute bottom-1 left-1">
+          <CheckCircle2 size={16} className="text-green-500 drop-shadow" />
+        </div>
+      );
+    }
+    return null;
+  };
 
   if (isLoading) {
     return (
@@ -278,7 +414,7 @@ export const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit,
           </div>
         )}
 
-        {/* Photos */}
+        {/* Photos — bevosita Supabase'ga yuklash */}
         <div>
           <div className="flex justify-between items-center mb-1">
             <h3 className="font-bold text-gray-900">{t('add.photos')}</h3>
@@ -291,25 +427,36 @@ export const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit,
               <button 
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="shrink-0 w-[100px] h-[100px] bg-gray-50 border border-gray-200 rounded-2xl flex items-center justify-center text-gray-900 active:bg-gray-100 transition-colors"
+                disabled={uploadingImages}
+                className="shrink-0 w-[100px] h-[100px] bg-gray-50 border border-gray-200 rounded-2xl flex items-center justify-center text-gray-900 active:bg-gray-100 transition-colors disabled:opacity-50"
               >
-                <Camera size={28} />
+                {uploadingImages ? <Loader2 size={28} className="animate-spin" /> : <Camera size={28} />}
               </button>
             )}
             
-            {images.map((img, idx) => (
-              <div key={idx} className="shrink-0 w-[100px] h-[100px] relative rounded-2xl border border-gray-200 overflow-hidden">
-                <img src={typeof img === 'string' ? img : URL.createObjectURL(img)} alt="Uploaded" className="w-full h-full object-cover" />
-                <button 
-                  type="button"
-                  onClick={() => removeImage(idx)}
-                  className="absolute top-1 right-1 bg-white/80 p-1 rounded-full text-red-500 backdrop-blur-sm shadow-sm"
-                >
-                  <X size={14} />
-                </button>
+            {images.map((item) => (
+              <div key={item.id} className="shrink-0 w-[100px] h-[100px] relative rounded-2xl border border-gray-200 overflow-hidden">
+                <img src={item.previewUrl} alt="Uploaded" className="w-full h-full object-cover" />
+                {renderImageBadge(item)}
+                {item.status !== 'uploading' && (
+                  <button 
+                    type="button"
+                    onClick={() => removeImage(item.id)}
+                    className="absolute top-1 right-1 bg-white/80 p-1 rounded-full text-red-500 backdrop-blur-sm shadow-sm"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
               </div>
             ))}
           </div>
+
+          {/* Uploading progress text */}
+          {uploadingImages && (
+            <p className="text-xs text-blue-600 font-medium mt-2 animate-pulse">
+              📤 Rasmlar yuklanmoqda...
+            </p>
+          )}
 
           <input 
             type="file" 
@@ -537,10 +684,10 @@ export const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit,
 
         <button 
           type="submit"
-          disabled={isSubmitting || isLoading}
+          disabled={isSubmitting || isLoading || uploadingImages}
           className="w-full py-4 bg-black text-white rounded-[20px] font-bold text-lg active:scale-[0.98] transition-transform mt-6 disabled:opacity-70"
         >
-          {isSubmitting || isLoading ? 'Yuklanmoqda...' : t('add.ready')}
+          {uploadingImages ? '📤 Rasmlar yuklanmoqda...' : isSubmitting || isLoading ? 'Saqlanmoqda...' : t('add.ready')}
         </button>
       </form>
 

@@ -6,7 +6,8 @@ import { useTranslation } from '../i18n/LanguageContext';
 import { LanguageSwitcher } from '../components/LanguageSwitcher';
 import { LogOut, Edit3, Trash2, Zap, Image as ImageIcon, CheckCircle, Copy, Check, X, Hourglass } from 'lucide-react';
 import { ListingCard } from '../components/ListingCard';
-import { fetchMyListings, deleteListingApi } from '../api/listings';
+import { fetchMyListings, deleteListingDirect } from '../api/listings';
+import { supabase } from '../api/supabase';
 import { getUser, logout } from '../api/auth';
 import { verifyReceiptPayment } from '../api/ai';
 
@@ -51,7 +52,7 @@ export const MyListings: React.FC = () => {
   const handleDelete = async (listingId: string) => {
     if (window.confirm("Rostdan ham bu e'lonni o'chirmoqchimisiz?")) {
       try {
-        await deleteListingApi(listingId);
+        await deleteListingDirect(listingId);
         setListings(prev => prev.filter(l => l.id !== listingId));
       } catch (error) {
         console.error('Error deleting listing:', error);
@@ -109,13 +110,9 @@ export const MyListings: React.FC = () => {
     
     if (window.confirm("E'lonni TOP qilish narxi 20,000 so'm. Hisobingizdan yechiladi. Tasdiqlaysizmi?")) {
       try {
-        // Backendga so'rov yuborish (biz updateListingApi ni ishlatsak bo'ladi)
-        // Ammo aslida backendda alohida endpoint bo'lishi kerak pul yechish uchun.
-        // Hozircha MVP uchun faqat local balansni kamaytirib, statusni o'zgartiramiz:
-        await import('../api/listings').then(m => m.updateListingApi(id, { status: 'PROMOTED' }));
+        await supabase.from('listings').update({ status: 'PROMOTED' }).eq('id', id);
         setBalance(prev => prev - 20000);
         alert("E'loningiz TOP ga chiqarildi!");
-        // Update local listing
         setListings(prev => prev.map(l => l.id === id ? { ...l, status: 'PROMOTED' } : l));
       } catch (err) {
         console.error(err);
