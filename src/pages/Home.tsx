@@ -70,6 +70,21 @@ export const Home: React.FC = () => {
         };
         queryParams.property_type = propMap[currentFilters.propertyType] || currentFilters.propertyType;
       }
+
+      const rentFilterMap: Record<string, string> = {
+        'family': 'Oila',
+        'girls': 'Student qizlar',
+        'boys': 'Student bolalar',
+        'student_girls': 'Student qizlar',
+        'student_boys': 'Student bolalar'
+      };
+
+      if (currentFilters.rentFilter) {
+         queryParams.rent_target = rentFilterMap[currentFilters.rentFilter];
+      } else if (selectedForWhom) {
+         queryParams.rent_target = rentFilterMap[selectedForWhom];
+      }
+      
       
       if (priceTo) queryParams.price_max = parseInt(priceTo);
       // Backend does not currently support `price_min`, `query`, or complex location filters, 

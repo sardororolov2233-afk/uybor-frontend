@@ -21,13 +21,22 @@ export const EditListing: React.FC = () => {
         const data = await fetchListingById(id);
         const [c, r, d, ...s] = (data.address || '').split(', ');
         
+        let parsedDesc = data.description || '';
+        let rentTarget = '';
+        const match = parsedDesc.match(/^Kimlar uchun: (.*?)\n\n/);
+        if (match) {
+          rentTarget = match[1];
+          parsedDesc = parsedDesc.replace(match[0], '');
+        }
+
         setInitialData({
           goal: data.category === 'SALE' ? 'sell' : 'rent_out',
           propertyType: data.property_type?.toLowerCase() || 'apartment',
           formData: {
             title: data.title || '',
-            description: data.description || '',
+            description: parsedDesc,
             whoPosted: 'egasi',
+            rentTarget,
             area: (data.area || '').toString(),
             price: (data.price || '').toString(),
             currency: data.currency === 'USD' ? 'y.e' : 'so\'m',
@@ -55,6 +64,11 @@ export const EditListing: React.FC = () => {
     setIsSubmitting(true);
     try {
       const category = ['sell', 'buy'].includes(data.goal) ? 'SALE' : 'RENT';
+      let finalDescription = data.formData.description;
+      if (category === 'RENT' && data.formData.rentTarget) {
+        finalDescription = `Kimlar uchun: ${data.formData.rentTarget}\n\n${finalDescription}`;
+      }
+
       const propTypeMap: Record<string, string> = {
         apartment: 'APARTMENT',
         house: 'HOUSE',
@@ -64,7 +78,7 @@ export const EditListing: React.FC = () => {
 
       await updateListingDirect(id, {
         title: data.formData.title,
-        description: data.formData.description,
+        description: finalDescription,
         price: parseFloat(data.formData.price) || 0,
         currency: data.formData.currency === "so'm" ? 'UZS' : 'USD',
         category,

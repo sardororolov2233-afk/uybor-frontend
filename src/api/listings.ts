@@ -8,6 +8,7 @@ interface ListingsParams {
   property_type?: string;
   rooms?: number;
   price_max?: number;
+  rent_target?: string;
 }
 
 // ============ READ operatsiyalari (backend orqali) ============

@@ -14,6 +14,11 @@ export const AddListing: React.FC = () => {
     setIsSubmitting(true);
     try {
       const category = ['sell', 'buy'].includes(data.goal) ? 'SALE' : 'RENT';
+      let finalDescription = data.formData.description;
+      if (category === 'RENT' && data.formData.rentTarget) {
+        finalDescription = `Kimlar uchun: ${data.formData.rentTarget}\n\n${finalDescription}`;
+      }
+
       const propTypeMap: Record<string, string> = {
         apartment: 'APARTMENT',
         house: 'HOUSE',
@@ -23,7 +28,7 @@ export const AddListing: React.FC = () => {
 
       await createListingDirect({
         title: data.formData.title,
-        description: data.formData.description,
+        description: finalDescription,
         price: parseFloat(data.formData.price) || 0,
         currency: data.formData.currency === "so'm" ? 'UZS' : 'USD',
         category,

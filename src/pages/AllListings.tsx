@@ -31,6 +31,20 @@ export const AllListings: React.FC = () => {
             };
             queryParams.property_type = propMap[stateFilters.currentFilters.propertyType] || stateFilters.currentFilters.propertyType;
           }
+
+          const rentFilterMap: Record<string, string> = {
+            'family': 'Oila',
+            'girls': 'Student qizlar',
+            'boys': 'Student bolalar',
+            'student_girls': 'Student qizlar',
+            'student_boys': 'Student bolalar'
+          };
+    
+          if (stateFilters.currentFilters.rentFilter) {
+             queryParams.rent_target = rentFilterMap[stateFilters.currentFilters.rentFilter];
+          } else if (stateFilters.selectedForWhom) {
+             queryParams.rent_target = rentFilterMap[stateFilters.selectedForWhom];
+          }
         }
         
         if (stateFilters?.priceTo) queryParams.price_max = parseInt(stateFilters.priceTo);

@@ -11,6 +11,7 @@ export interface ListingFormData {
   title: string;
   description: string;
   whoPosted: string;
+  rentTarget?: string;
   area: string;
   price: string;
   currency: string;
@@ -67,6 +68,7 @@ export const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit,
     title: '',
     description: '',
     whoPosted: 'rieltor',
+    rentTarget: '',
     area: '',
     price: '',
     currency: 'so\'m',
@@ -518,6 +520,36 @@ export const ListingForm: React.FC<ListingFormProps> = ({ initialData, onSubmit,
             </button>
           </div>
         </div>
+
+        {/* Kimlar uchun (Only for Rent) */}
+        {(goal === 'daily_rent' || goal === 'rent_out' || goal === 'rent_in') && (
+          <div>
+            <h3 className="font-bold text-gray-900 mb-2">Kimlar uchun (Ijaraga)</h3>
+            <div className="grid grid-cols-3 gap-2">
+              <button 
+                type="button"
+                onClick={() => setFormData({ ...formData, rentTarget: 'Oila' })}
+                className={`py-3 rounded-xl font-bold text-sm transition-colors ${formData.rentTarget === 'Oila' ? 'bg-[#ffde33] text-gray-900' : 'bg-gray-50 text-gray-400'}`}
+              >
+                Oila
+              </button>
+              <button 
+                type="button"
+                onClick={() => setFormData({ ...formData, rentTarget: 'Student qizlar' })}
+                className={`py-3 rounded-xl font-bold text-sm transition-colors ${formData.rentTarget === 'Student qizlar' ? 'bg-[#ffde33] text-gray-900' : 'bg-gray-50 text-gray-400'}`}
+              >
+                Talaba qizlar
+              </button>
+              <button 
+                type="button"
+                onClick={() => setFormData({ ...formData, rentTarget: 'Student bolalar' })}
+                className={`py-3 rounded-xl font-bold text-sm transition-colors ${formData.rentTarget === 'Student bolalar' ? 'bg-[#ffde33] text-gray-900' : 'bg-gray-50 text-gray-400'}`}
+              >
+                Talaba yigitlar
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Area */}
         <div>
