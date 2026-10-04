@@ -14,6 +14,7 @@ const AllListings = lazy(() => import('./pages/AllListings').then(m => ({ defaul
 const Messages = lazy(() => import('./pages/Messages').then(m => ({ default: m.Messages })));
 const Favorites = lazy(() => import('./pages/Favorites').then(m => ({ default: m.Favorites })));
 const SavedSearches = lazy(() => import('./pages/SavedSearches').then(m => ({ default: m.SavedSearches })));
+const Packages = lazy(() => import('./pages/Packages').then(m => ({ default: m.Packages })));
 
 const App: React.FC = () => {
   const [ready, setReady] = useState(false);
@@ -91,6 +92,7 @@ const App: React.FC = () => {
             <Route path="my-listings" element={<ProtectedRoute><MyListings /></ProtectedRoute>} />
             <Route path="favorites" element={<Favorites />} />
             <Route path="saved-searches" element={<SavedSearches />} />
+            <Route path="packages" element={<Packages />} />
           </Route>
         </Routes>
       </Suspense>

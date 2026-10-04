@@ -23,7 +23,7 @@ export const Home: React.FC = () => {
   // Full filter state
   const [currentFilters, setCurrentFilters] = useState<FilterState>({
     query: '',
-    category: 'sale',
+    category: 'rent',
     rentFilter: null,
     isOwner: false,
     isMortgage: false,
@@ -102,8 +102,8 @@ export const Home: React.FC = () => {
         });
       }
 
-      setNewListings(allListings.slice(0, 10));
-      setVipListings(allListings.slice(0, 3));
+      setNewListings(allListings.filter(l => l.status === 'ACTIVE').slice(0, 10));
+      setVipListings(allListings.filter(l => l.status === 'PROMOTED').slice(0, 3));
       setFeaturedListings(allListings.slice(0, 4));
     } catch (error) {
       console.error('Failed to fetch listings', error);

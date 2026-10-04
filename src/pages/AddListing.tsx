@@ -43,10 +43,17 @@ export const AddListing: React.FC = () => {
       navigate('/my-listings');
     } catch (error: any) {
       console.error('Error creating listing:', error);
+      // Check if limit reached by either error code or status or message
+      if (error?.response?.data?.error === 'LIMIT_REACHED' || error?.response?.status === 403) {
+         navigate('/packages');
+         return;
+      }
+      
+      const msg = error?.response?.data?.message || error?.message || t('add.error');
       if (WebApp && WebApp.showAlert) {
-        WebApp.showAlert(error?.message || t('add.error'));
+        WebApp.showAlert(msg);
       } else {
-        alert(error?.message || t('add.error'));
+        alert(msg);
       }
     } finally {
       setIsSubmitting(false);

@@ -20,7 +20,7 @@ interface FilterFormProps {
 export const FilterForm: React.FC<FilterFormProps> = ({ onFiltersChange, onOpenFilter }) => {
   const [filters, setFilters] = useState<FilterState>({
     query: '',
-    category: 'sale',
+    category: 'rent',
     rentFilter: null,
     isOwner: false,
     isMortgage: false,
@@ -83,16 +83,16 @@ export const FilterForm: React.FC<FilterFormProps> = ({ onFiltersChange, onOpenF
       {/* Main Filter Tabs */}
       <div className="flex bg-gray-100 rounded-xl p-1">
         <button 
-          onClick={() => updateFilter('category', 'sale')}
-          className={`flex-1 py-1.5 text-sm font-semibold rounded-lg transition-colors ${filters.category === 'sale' ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
-        >
-          {t('filter.sale')}
-        </button>
-        <button 
           onClick={() => updateFilter('category', 'rent')}
           className={`flex-1 py-1.5 text-sm font-semibold rounded-lg transition-colors ${filters.category === 'rent' ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
         >
           {t('filter.rent')}
+        </button>
+        <button 
+          onClick={() => updateFilter('category', 'sale')}
+          className={`flex-1 py-1.5 text-sm font-semibold rounded-lg transition-colors ${filters.category === 'sale' ? 'bg-[#ffde33] text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'}`}
+        >
+          {t('filter.sale')}
         </button>
         <button 
           onClick={() => updateFilter('category', 'daily')}
