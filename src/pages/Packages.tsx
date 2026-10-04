@@ -1,10 +1,8 @@
 import React from 'react';
-import { useTranslation } from '../i18n/LanguageContext';
 import { Check, Star, Shield, Zap } from 'lucide-react';
 import WebApp from '@twa-dev/sdk';
 
 export const Packages: React.FC = () => {
-  const { t } = useTranslation();
 
   const packages = [
     {
@@ -47,6 +45,7 @@ export const Packages: React.FC = () => {
   ];
 
   const handlePurchase = (pkgId: string) => {
+    console.log('Selected package:', pkgId);
     if (WebApp && WebApp.showAlert) {
       WebApp.showAlert('To\'lov tizimiga o\'tilmoqda... Tez orada qo\'shiladi!');
     } else {
