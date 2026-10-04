@@ -213,6 +213,69 @@ export const MyListings: React.FC = () => {
               <LanguageSwitcher />
             </div>
 
+            {/* VIP Boost Explanation */}
+            <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-3xl p-5 mb-4 shadow-sm border border-blue-200">
+              <div className="flex items-start gap-3">
+                <div className="bg-[#ffde33] p-2 rounded-xl text-gray-900 shadow-sm">
+                  <Zap size={24} />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900 leading-tight mb-1">E'lonni VIP (Top) qilish</h3>
+                  <p className="text-sm text-gray-700 font-medium">Bitta e'lonni VIP qilish narxi: <strong>20,000 so'm</strong>.</p>
+                  <p className="text-xs text-gray-600 mt-1">VIP e'lonlar qidiruv natijalarida va bosh sahifada eng yuqorida (qizil "VIP" belgisi bilan) chiqadi. Bu sizga tezkor mijoz topishga yordam beradi.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Realtor Packages */}
+            <div className="mb-6">
+              <h3 className="text-lg font-bold text-gray-900 mb-3 px-1">Rieltorlik tariflari</h3>
+              <div className="flex overflow-x-auto hide-scrollbar gap-3 pb-2 snap-x">
+                {/* Rieltor Plus */}
+                <div className="min-w-[260px] snap-start bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <h4 className="text-xl font-black text-gray-900 mb-1">Plus</h4>
+                    <div className="text-lg font-bold text-blue-600 mb-3">69,000 <span className="text-xs text-gray-500 font-normal">so'm/oy</span></div>
+                    <ul className="space-y-1.5 mb-4">
+                      <li className="flex items-center gap-1.5 text-xs font-medium text-gray-700"><CheckCircle size={14} className="text-green-500"/> Oyiga 20 ta e'lon</li>
+                      <li className="flex items-center gap-1.5 text-xs font-medium text-gray-700"><CheckCircle size={14} className="text-green-500"/> 5 ta e'lon VIP</li>
+                      <li className="flex items-center gap-1.5 text-xs font-medium text-gray-700"><CheckCircle size={14} className="text-gray-400"/> Limitdan so'ng: 7,000 so'm/e'lon</li>
+                    </ul>
+                  </div>
+                  <button onClick={() => alert("To'lov tizimi tez orada ishga tushadi")} className="w-full py-2 bg-gray-100 text-gray-800 font-bold text-sm rounded-xl active:scale-95 transition-transform">Xarid qilish</button>
+                </div>
+                {/* Rieltor Pro */}
+                <div className="min-w-[260px] snap-start bg-white rounded-2xl p-4 border-2 border-[#ffde33] shadow-md flex flex-col justify-between relative overflow-hidden">
+                  <div className="absolute top-0 right-0 bg-[#ffde33] text-[10px] font-bold px-2 py-0.5 rounded-bl-lg">Tavsiya</div>
+                  <div>
+                    <h4 className="text-xl font-black text-gray-900 mb-1">Pro</h4>
+                    <div className="text-lg font-bold text-blue-600 mb-3">129,000 <span className="text-xs text-gray-500 font-normal">so'm/oy</span></div>
+                    <ul className="space-y-1.5 mb-4">
+                      <li className="flex items-center gap-1.5 text-xs font-medium text-gray-700"><CheckCircle size={14} className="text-green-500"/> Oyiga 50 ta e'lon</li>
+                      <li className="flex items-center gap-1.5 text-xs font-medium text-gray-700"><CheckCircle size={14} className="text-green-500"/> 20 ta e'lon VIP</li>
+                      <li className="flex items-center gap-1.5 text-xs font-medium text-gray-700"><CheckCircle size={14} className="text-gray-400"/> Limitdan so'ng: 7,000 so'm/e'lon</li>
+                    </ul>
+                  </div>
+                  <button onClick={() => alert("To'lov tizimi tez orada ishga tushadi")} className="w-full py-2 bg-[#ffde33] text-gray-900 font-bold text-sm rounded-xl active:scale-95 transition-transform shadow-sm">Xarid qilish</button>
+                </div>
+                {/* Rieltor Max */}
+                <div className="min-w-[260px] snap-start bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex flex-col justify-between">
+                  <div>
+                    <h4 className="text-xl font-black text-gray-900 mb-1">Max</h4>
+                    <div className="text-lg font-bold text-blue-600 mb-3">299,000 <span className="text-xs text-gray-500 font-normal">so'm/oy</span></div>
+                    <ul className="space-y-1.5 mb-4">
+                      <li className="flex items-center gap-1.5 text-xs font-medium text-gray-700"><CheckCircle size={14} className="text-green-500"/> Oyiga 300 ta e'lon</li>
+                      <li className="flex items-center gap-1.5 text-xs font-medium text-gray-700"><CheckCircle size={14} className="text-green-500"/> 100 ta e'lon VIP</li>
+                      <li className="flex items-center gap-1.5 text-xs font-medium text-gray-700"><CheckCircle size={14} className="text-gray-400"/> Limitdan so'ng: 7,000 so'm/e'lon</li>
+                    </ul>
+                  </div>
+                  <button onClick={() => alert("To'lov tizimi tez orada ishga tushadi")} className="w-full py-2 bg-gray-100 text-gray-800 font-bold text-sm rounded-xl active:scale-95 transition-transform">Xarid qilish</button>
+                </div>
+              </div>
+            </div>
+
+            <h3 className="text-lg font-bold text-gray-900 mb-3 px-1">Mening e'lonlarim</h3>
+
             {loading ? (
               <div className="flex justify-center p-8">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
