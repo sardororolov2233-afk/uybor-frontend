@@ -213,6 +213,51 @@ export const MyListings: React.FC = () => {
               <LanguageSwitcher />
             </div>
 
+            <h3 className="text-lg font-bold text-gray-900 mb-3 px-1">Mening e'lonlarim</h3>
+
+            {loading ? (
+              <div className="flex justify-center p-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+              </div>
+            ) : listings.length > 0 ? (
+              <div className="flex flex-col gap-4 mb-6">
+                {listings.map(listing => (
+                  <div key={listing.id} className="bg-white rounded-3xl p-3 shadow-sm border border-gray-100 relative">
+                    <ListingCard listing={listing} />
+                    
+                    {/* Action Buttons for User's own listing */}
+                    <div className="flex justify-between items-center mt-3 gap-2 px-1 pb-1">
+                      <button 
+                        onClick={() => handleEdit(listing.id)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-semibold text-sm active:scale-95 transition-transform"
+                      >
+                        <Edit3 size={16} />
+                        Tahrirlash
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(listing.id)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-red-50 text-red-500 rounded-xl font-semibold text-sm active:scale-95 transition-transform"
+                      >
+                        <Trash2 size={16} />
+                        O'chirish
+                      </button>
+                      <button 
+                        onClick={() => handlePromoteTop(listing.id)}
+                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-[#ffde33] text-gray-900 rounded-xl font-bold text-sm active:scale-95 transition-transform shadow-sm"
+                      >
+                        <Zap size={16} />
+                        Top
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center text-gray-500 mt-2 mb-6 text-[15px] font-medium bg-white p-8 rounded-3xl border border-gray-100">
+                {t('profile.noProperties')}
+              </div>
+            )}
+
             {/* VIP Boost Explanation */}
             <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-3xl p-5 mb-4 shadow-sm border border-blue-200">
               <div className="flex items-start gap-3">
@@ -273,51 +318,6 @@ export const MyListings: React.FC = () => {
                 </div>
               </div>
             </div>
-
-            <h3 className="text-lg font-bold text-gray-900 mb-3 px-1">Mening e'lonlarim</h3>
-
-            {loading ? (
-              <div className="flex justify-center p-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              </div>
-            ) : listings.length > 0 ? (
-              <div className="flex flex-col gap-4">
-                {listings.map(listing => (
-                  <div key={listing.id} className="bg-white rounded-3xl p-3 shadow-sm border border-gray-100 relative">
-                    <ListingCard listing={listing} />
-                    
-                    {/* Action Buttons for User's own listing */}
-                    <div className="flex justify-between items-center mt-3 gap-2 px-1 pb-1">
-                      <button 
-                        onClick={() => handleEdit(listing.id)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-gray-100 text-gray-700 rounded-xl font-semibold text-sm active:scale-95 transition-transform"
-                      >
-                        <Edit3 size={16} />
-                        Tahrirlash
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(listing.id)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-red-50 text-red-500 rounded-xl font-semibold text-sm active:scale-95 transition-transform"
-                      >
-                        <Trash2 size={16} />
-                        O'chirish
-                      </button>
-                      <button 
-                        onClick={() => handlePromoteTop(listing.id)}
-                        className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-[#ffde33] text-gray-900 rounded-xl font-bold text-sm active:scale-95 transition-transform shadow-sm"
-                      >
-                        <Zap size={16} />
-                        Top
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center text-gray-500 mt-10 mb-4 text-[15px] font-medium bg-white p-8 rounded-3xl border border-gray-100">
-                {t('profile.noProperties')}
-              </div>
-            )}
           </div>
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
