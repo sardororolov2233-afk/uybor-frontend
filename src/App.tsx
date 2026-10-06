@@ -16,34 +16,47 @@ const Favorites = lazy(() => import('./pages/Favorites').then(m => ({ default: m
 const SavedSearches = lazy(() => import('./pages/SavedSearches').then(m => ({ default: m.SavedSearches })));
 const Packages = lazy(() => import('./pages/Packages').then(m => ({ default: m.Packages })));
 
+import { useNavigate } from 'react-router-dom';
+
+const RedirectHandler = () => {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const tg = (window as any)?.Telegram?.WebApp || WebApp;
+    const startParam = tg?.initDataUnsafe?.start_param;
+    
+    if (startParam && startParam.startsWith('listing_')) {
+      const listingId = startParam.replace('listing_', '');
+      // Telegram ba'zan bir marta o'qilgandan so'ng qayta yuklansa shu paramni saqlab qoladi
+      // Shuning uchun uni tekshirib, keyin o'tamiz.
+      // Biz faqat bir marta yo'naltirishimiz kerak:
+      const processed = sessionStorage.getItem('processed_start_param');
+      if (processed !== startParam) {
+        sessionStorage.setItem('processed_start_param', startParam);
+        navigate(`/listing/${listingId}`, { replace: true });
+      }
+    }
+  }, [navigate]);
+  return null;
+};
+
 const App: React.FC = () => {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     const init = async () => {
-      // console.log('=== UYBOR INIT START ===');
       const tg = (window as any)?.Telegram?.WebApp || WebApp;
       try {
         tg?.ready();
         tg?.expand();
       } catch (e) {
-        // console.warn('Error calling tg.ready()/expand():', e);
       }
-
-      // console.log('WebApp available:', !!tg);
-      // console.log('WebApp.initData length:', tg?.initData?.length || 0);
-      // console.log('WebApp.initDataUnsafe.user:', JSON.stringify(tg?.initDataUnsafe?.user));
 
       const tgUser = tg?.initDataUnsafe?.user;
 
-      // Always try to login if initData exists
       if (tg?.initData) {
-        // console.log('initData found, calling loginWithTelegram...');
         const result = await loginWithTelegram();
         if (result?.user) {
-          // console.log('Successfully logged in with backend user:', result.user);
         } else if (tgUser) {
-          // console.warn('Backend login failed, fallback to tgUser:', tgUser);
           localStorage.setItem('uybor_user', JSON.stringify({
             telegram_id: tgUser.id,
             first_name: tgUser.first_name || '',
@@ -53,7 +66,6 @@ const App: React.FC = () => {
           }));
         }
       } else if (tgUser) {
-        // console.log('Only initDataUnsafe available, storing fallback user:', tgUser);
         localStorage.setItem('uybor_user', JSON.stringify({
           telegram_id: tgUser.id,
           first_name: tgUser.first_name || '',
@@ -63,8 +75,6 @@ const App: React.FC = () => {
         }));
       }
 
-      // console.log('Current stored user:', localStorage.getItem('uybor_user'));
-      // console.log('=== UYBOR INIT COMPLETE ===');
       setReady(true);
     };
     init();
@@ -80,6 +90,7 @@ const App: React.FC = () => {
 
   return (
     <BrowserRouter>
+      <RedirectHandler />
       <Suspense fallback={<div className="flex h-screen items-center justify-center">Yuklanmoqda...</div>}>
         <Routes>
           <Route path="/" element={<Layout />}>

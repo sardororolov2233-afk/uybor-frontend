@@ -111,14 +111,15 @@ export const Details: React.FC = () => {
   };
 
   const handleShare = () => {
-    const url = window.location.href;
+    const botUrl = `https://t.me/UyBorN1_bot?startapp=listing_${listing?.id}`;
     const title = listing?.title || "UyBor E'lon";
     const priceStr = listing?.price ? `${listing.price.toLocaleString()} ${listing.currency || 'y.e'}` : '';
     const textToShare = `🏠 ${title}\n💰 Narxi: ${priceStr}\n\nBatafsil ma'lumot:`;
+    const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(botUrl)}&text=${encodeURIComponent(textToShare)}`;
     
-    const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(textToShare)}`;
-    
-    if (WebApp && WebApp.openTelegramLink) {
+    if (WebApp && WebApp.switchInlineQuery) {
+      WebApp.switchInlineQuery(`listing_${listing?.id}`);
+    } else if (WebApp && WebApp.openTelegramLink) {
       WebApp.openTelegramLink(telegramShareUrl);
     } else {
       window.open(telegramShareUrl, '_blank');
