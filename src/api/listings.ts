@@ -101,6 +101,7 @@ export interface CreateListingInput {
   area?: number | null;
   address: string;
   imageUrls: string[];
+  contact_phone?: string;
 }
 
 export async function createListingDirect(input: CreateListingInput): Promise<Listing> {
@@ -123,6 +124,7 @@ export interface UpdateListingInput {
   address: string;
   imageUrls: string[];
   status?: string;
+  contact_phone?: string;
 }
 
 export async function updateListingDirect(id: string, input: UpdateListingInput): Promise<Listing> {

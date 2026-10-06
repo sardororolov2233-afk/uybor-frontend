@@ -112,15 +112,16 @@ export const Details: React.FC = () => {
 
   const handleShare = () => {
     const url = window.location.href;
-    if (navigator.share) {
-      navigator.share({
-        title: listing?.title || "UyBor E'lon",
-        url: url
-      }).catch(err => console.error(err));
+    const title = listing?.title || "UyBor E'lon";
+    const priceStr = listing?.price ? `${listing.price.toLocaleString()} ${listing.currency || 'y.e'}` : '';
+    const textToShare = `🏠 ${title}\n💰 Narxi: ${priceStr}\n\nBatafsil ma'lumot:`;
+    
+    const telegramShareUrl = `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(textToShare)}`;
+    
+    if (WebApp && WebApp.openTelegramLink) {
+      WebApp.openTelegramLink(telegramShareUrl);
     } else {
-      navigator.clipboard.writeText(url).then(() => {
-        alert("Havola nusxalandi!");
-      });
+      window.open(telegramShareUrl, '_blank');
     }
   };
 

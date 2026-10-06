@@ -38,6 +38,7 @@ export const AddListing: React.FC = () => {
         address: [data.formData.country, data.formData.region, data.formData.district, data.formData.streetAddress]
           .filter(Boolean).join(', '),
         imageUrls: data.imageUrls,
+        contact_phone: data.formData.phone,
       });
 
       if (WebApp && WebApp.showAlert) {
